@@ -93,9 +93,9 @@ public partial class World : Node3D
     {
         // if (busyRendering) return;
 
-        for (int x = Mathf.FloorToInt(from.X - RENDER_DISTANCE); x < Mathf.FloorToInt(from.X + RENDER_DISTANCE); x++)
+        for (int x = Mathf.FloorToInt(from.X - RENDER_DISTANCE); x < Mathf.CeilToInt(from.X + RENDER_DISTANCE); x++)
         {   
-            for (int y = Mathf.FloorToInt(from.Y - RENDER_DISTANCE); y < Mathf.FloorToInt(from.Y + RENDER_DISTANCE); y++)
+            for (int y = Mathf.FloorToInt(from.Y - RENDER_DISTANCE); y < Mathf.CeilToInt(from.Y + RENDER_DISTANCE); y++)
             {
                 Vector2I chunkPositionToMake = new(x, y);
                 if ((from.DistanceTo(new Vector2(x, y)) <= RENDER_DISTANCE) && (!chunks.ContainsKey(chunkPositionToMake)))
