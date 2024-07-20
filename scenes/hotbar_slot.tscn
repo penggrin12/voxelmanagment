@@ -1,0 +1,64 @@
+[gd_scene load_steps=14 format=3 uid="uid://cuhdmndamqwxt"]
+
+[ext_resource type="FontFile" uid="uid://by4ibn03xlb86" path="res://addons/material-design-icons/fonts/material_design_icons.ttf" id="1_lcsdk"]
+[ext_resource type="Script" path="res://addons/material-design-icons/nodes/MaterialButton.gd" id="2_siyfc"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rys0r"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_57d41"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nm3ik"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_331xo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l0bwu"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_u2udh"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_y7ds3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_shd02"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_h58f5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qilph"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sa3wn"]
+
+[node name="HotbarSlot" type="AspectRatioContainer"]
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 8
+
+[node name="MaterialButton" type="Button" parent="PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_lcsdk")
+theme_override_font_sizes/font_size = 28
+theme_override_styles/focus = SubResource("StyleBoxEmpty_rys0r")
+theme_override_styles/disabled_mirrored = SubResource("StyleBoxEmpty_57d41")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_nm3ik")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_331xo")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_l0bwu")
+theme_override_styles/hover_mirrored = SubResource("StyleBoxEmpty_u2udh")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_y7ds3")
+theme_override_styles/pressed_mirrored = SubResource("StyleBoxEmpty_shd02")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_h58f5")
+theme_override_styles/normal_mirrored = SubResource("StyleBoxEmpty_qilph")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_sa3wn")
+text = "󰙴"
+script = ExtResource("2_siyfc")
+icon_name = "creation"
+icon_size = 28
+
+[node name="Label" type="Label" parent="PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+text = "11"

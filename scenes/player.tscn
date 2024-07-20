@@ -1,0 +1,52 @@
+[gd_scene load_steps=7 format=3 uid="uid://d37ihmnshv7a1"]
+
+[ext_resource type="Script" path="res://src/Player.cs" id="1_mddyi"]
+[ext_resource type="PackedScene" uid="uid://xtw3o2au4p4q" path="res://scenes/crosshair.tscn" id="3_4ndio"]
+[ext_resource type="PackedScene" uid="uid://thwpwy52rvv7" path="res://scenes/voxel_break_decoration.tscn" id="3_mx212"]
+[ext_resource type="PackedScene" uid="uid://dxjfm7sn0808l" path="res://scenes/hotbar.tscn" id="4_pkkie"]
+[ext_resource type="PackedScene" uid="uid://cidu3e31n6jpo" path="res://scenes/skysphere.tscn" id="5_5chm5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m278b"]
+size = Vector3(0.6, 1.85, 0.6)
+
+[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("head", "collision", "ray")]
+script = ExtResource("1_mddyi")
+head = NodePath("Head")
+collision = NodePath("Collision")
+ray = NodePath("Head/RayCast3D")
+voxelBreakDecoration = ExtResource("3_mx212")
+maxVelocityAir = 0.45
+maxVelocityGround = 5.0
+gravity = 30.0
+stopSpeed = 10.0
+jumpImpulse = 8.5
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" parent="CanvasLayer" instance=ExtResource("3_4ndio")]
+
+[node name="Hotbar" parent="CanvasLayer" instance=ExtResource("4_pkkie")]
+visible = false
+
+[node name="RemoteTransform3D" type="RemoteTransform3D" parent="."]
+remote_path = NodePath("../Skysphere")
+update_rotation = false
+update_scale = false
+
+[node name="Skysphere" parent="." instance=ExtResource("5_5chm5")]
+top_level = true
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.925, 0)
+shape = SubResource("BoxShape3D_m278b")
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+
+[node name="Camera" type="Camera3D" parent="Head"]
+current = true
+
+[node name="RayCast3D" type="RayCast3D" parent="Head"]
+target_position = Vector3(0, 0, -5)
+collision_mask = 2
+debug_shape_thickness = 1

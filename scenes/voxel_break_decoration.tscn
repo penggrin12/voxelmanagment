@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://thwpwy52rvv7"]
+
+[ext_resource type="Texture2D" uid="uid://d27y7yy8hyikq" path="res://assets/textures/breakparticle.png" id="1_7wxvd"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1wsta"]
+albedo_texture = ExtResource("1_7wxvd")
+texture_filter = 0
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="QuadMesh_gvdgb"]
+material = SubResource("StandardMaterial3D_1wsta")
+size = Vector2(0.1, 0.1)
+
+[node name="VoxelBreakDecoration" type="Node3D"]
+
+[node name="Particles" type="CPUParticles3D" parent="."]
+emitting = false
+amount = 25
+one_shot = true
+explosiveness = 1.0
+visibility_aabb = AABB(-0.542137, -5.13839, -0.479131, 1.08319, 5.62122, 0.898908)
+mesh = SubResource("QuadMesh_gvdgb")
+emission_shape = 3
+emission_box_extents = Vector3(0.5, 0.5, 0.5)

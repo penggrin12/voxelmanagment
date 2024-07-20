@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://dauj6u1r6vrht"]
+
+[ext_resource type="Script" path="res://src/FreeCamera.cs" id="1_hyijs"]
+[ext_resource type="Script" path="res://src/FreeCameraPlayer.cs" id="1_uut6o"]
+
+[node name="FreeCameraPlayer" type="CharacterBody3D"]
+script = ExtResource("1_uut6o")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+script = ExtResource("1_hyijs")

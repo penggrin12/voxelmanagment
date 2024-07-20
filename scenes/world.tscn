@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://0vkyrgwl7ip"]
+
+[ext_resource type="PackedScene" uid="uid://cpgpda7t7oj2r" path="res://scenes/chunk.tscn" id="1_kkokg"]
+[ext_resource type="Script" path="res://src/World.cs" id="1_qwsdl"]
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_qwsdl")
+chunkScene = ExtResource("1_kkokg")

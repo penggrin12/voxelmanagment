@@ -1,0 +1,35 @@
+[gd_scene load_steps=7 format=3 uid="uid://cidu3e31n6jpo"]
+
+[ext_resource type="Script" path="res://src/HideInEditor.cs" id="1_2vkn4"]
+[ext_resource type="Shader" path="res://assets/shaders/sky.gdshader" id="2_lmebt"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_igt3u"]
+render_priority = 0
+shader = ExtResource("2_lmebt")
+
+[sub_resource type="SphereMesh" id="SphereMesh_dr14v"]
+material = SubResource("ShaderMaterial_igt3u")
+flip_faces = true
+radius = 800.0
+height = 1600.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e0hav"]
+shading_mode = 0
+disable_ambient_light = true
+disable_fog = true
+
+[sub_resource type="QuadMesh" id="QuadMesh_rld4j"]
+material = SubResource("StandardMaterial3D_e0hav")
+size = Vector2(128, 128)
+
+[node name="Skysphere" type="Node3D"]
+script = ExtResource("1_2vkn4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_dr14v")
+
+[node name="Sun" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.993307, -0.0816775, -0.0816775, 0, 0.707107, -0.707107, 0.115509, -0.702374, -0.702374, 156.492, 573.931, 480.126)
+mesh = SubResource("QuadMesh_rld4j")

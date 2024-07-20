@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://ujfc2nsqrqeq"]
+
+[ext_resource type="PackedScene" uid="uid://0vkyrgwl7ip" path="res://scenes/world.tscn" id="1_0ycli"]
+[ext_resource type="PackedScene" uid="uid://d37ihmnshv7a1" path="res://scenes/player.tscn" id="2_ij4oc"]
+
+[sub_resource type="Environment" id="Environment_hoff3"]
+background_energy_multiplier = 0.0
+tonemap_mode = 2
+ssao_intensity = 3.0
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_hoff3")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 0, 0)
+shadow_enabled = true
+
+[node name="World" parent="." instance=ExtResource("1_0ycli")]
+playerScene = ExtResource("2_ij4oc")

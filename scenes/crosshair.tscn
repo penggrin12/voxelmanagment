@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://xtw3o2au4p4q"]
+
+[ext_resource type="Shader" path="res://assets/shaders/crosshair.gdshader" id="1_qccxr"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gmjj0"]
+shader = ExtResource("1_qccxr")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f716y"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4cnse"]
+shader = ExtResource("1_qccxr")
+
+[node name="Crosshair" type="CenterContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="."]
+material = SubResource("ShaderMaterial_gmjj0")
+custom_minimum_size = Vector2(1, 15)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f716y")
+
+[node name="Panel2" type="Panel" parent="."]
+material = SubResource("ShaderMaterial_4cnse")
+custom_minimum_size = Vector2(15, 1)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f716y")
