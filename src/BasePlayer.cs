@@ -2,9 +2,10 @@ using Godot;
 
 namespace Game;
 
+// exists just for chunk rendering without
+// duplicating code between player controllers
 public partial class BasePlayer : CharacterBody3D
 {
-
 	private double lastTimeRenderedChunks = 0f;
 	private float renderChunksEverySeconds = 1f;
     public World world;

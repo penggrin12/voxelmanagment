@@ -1,5 +1,4 @@
 using Godot;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,12 +12,10 @@ public partial class World : Node3D
     private Dictionary<Vector2I, Chunk> chunks = new();
     private const int RENDER_DISTANCE = 2;
 
-    [Signal] public delegate void UpdateRenderDistanceEventHandler(Vector2 from);
+    [Signal] public delegate void UpdateRenderDistanceEventHandler(Vector2 from); // useless...?
 
     private Queue<Vector2I> chunksToGenerate = new();
     private Queue<Vector2I> chunksToRender = new();
-    private Queue<Vector2I> chunksToDeRender = new();
-    private bool busyRendering = false;
 
     public World()
     {
@@ -30,14 +27,6 @@ public partial class World : Node3D
         while (true)
         {
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-
-            // GD.Print($"{chunksToGenerate.Count} {chunksToRender.Count}");
-
-            // if (chunksToGenerate.Count == 0 && chunksToRender.Count == 0 && chunksToDeRender.Count == 0)
-            // {
-            //     busyRendering = false;
-            //     continue;     
-            // }
 
             if (chunksToGenerate.Count > 0)
             {
@@ -51,31 +40,8 @@ public partial class World : Node3D
                 Chunk chunkToRender = chunks[chunksToRender.Dequeue()];
                 chunkToRender.Rebuild();
             }
-
-            // for (int i = 0; i < 5; i++)
-            // {
-            //     if (chunksToDeRender.Count > 0)
-            //     {
-            //         Chunk chunkToDeRender = chunks[chunksToDeRender.Dequeue()];
-            //         chunkToDeRender.CallThreadSafe(Chunk.MethodName.DeRender);
-            //     }
-            // }
-
-            // chunksToGenerate.Clear();
-            // chunksToRender.Clear();
         }
     }
-
-    /// <summary>
-    /// Regenerate a specific chunk in this world
-    /// </summary>  
-    /// <param name="chunkPosition">Chunk to regenerate</param>
-    // public void RegenerateChunk(Vector2I chunkPosition)
-    // {
-    //     Chunk chunk = chunks[chunkPosition];
-    //     chunk.Regenerate();
-    //     chunk.Rebuild();
-    // }
 
     public Chunk GetChunk(int x, int y) { return GetChunk(new Vector2I(x, y)); }
     public Chunk GetChunk(Vector2I position)
@@ -91,8 +57,6 @@ public partial class World : Node3D
 
     private void HandleUpdateRenderDistance(Vector2 from)
     {
-        // if (busyRendering) return;
-
         for (int x = Mathf.FloorToInt(from.X - RENDER_DISTANCE); x < Mathf.CeilToInt(from.X + RENDER_DISTANCE); x++)
         {   
             for (int y = Mathf.FloorToInt(from.Y - RENDER_DISTANCE); y < Mathf.CeilToInt(from.Y + RENDER_DISTANCE); y++)
@@ -126,32 +90,17 @@ public partial class World : Node3D
                 GD.Print(chunkPosition);
                 chunks[chunkPosition].DeRender();
                 chunks[chunkPosition].QueueFree();
-                GD.Print(chunks.Remove(chunkPosition));  
-                // chunksToDeRender.Enqueue(chunk.ChunkPosition);
+                GD.Print(chunks.Remove(chunkPosition)); 
             }
-        }
-
-        // GC.Collect();
-        // GD.Print(GC.GetTotalMemory(true));
+        } 
     }
 
 	public override void _Ready()
 	{
-        // FillBlank();
-        // Regenerate();
-
         UpdateRenderDistance += HandleUpdateRenderDistance;
-        // HandleUpdateRenderDistance(new Vector2(0, 0));
 
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();
-
-        // Chunk newChunk = chunkScene.Instantiate<Chunk>();
-        // newChunk.ChunkPosition = new Vector2I(0, 0);
-        // AddChild(newChunk);
-        // newChunk.FillBlank();
-        // SetChunk(newChunk.ChunkPosition, newChunk);
-        // RegenerateChunk(newChunk.ChunkPosition);
 
         BasePlayer player = playerScene.Instantiate<BasePlayer>();
         player.world = this;

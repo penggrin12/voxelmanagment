@@ -1,5 +1,3 @@
-using Godot;
-
 namespace Game;
 
 public enum VoxelIDs : uint

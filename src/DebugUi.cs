@@ -4,7 +4,7 @@ namespace Game;
 
 public partial class DebugUi : Control
 {
-	public bool Enabled { get; set; } = true;
+	public bool Enabled { get; set; } = true; // should probably show/hide itself on change
 
 	public DebugUi()
 	{

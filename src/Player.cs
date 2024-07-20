@@ -48,7 +48,6 @@ public partial class Player : BasePlayer
 
     public override void _PhysicsProcess(double delta)
     {
-		// collision.GlobalPosition = GlobalPosition;
         collision.GlobalRotation = Vector3.Zero;
     }
 

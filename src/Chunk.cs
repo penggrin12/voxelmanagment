@@ -13,7 +13,7 @@ public partial class Chunk : Node3D
 
     private static readonly byte[] TEXTURE_LOOKUP = new byte[]
 	{
-		0, // not rendered
+		0, // not actually rendered
 		6, 3, 0
 	};
 
@@ -52,7 +52,6 @@ public partial class Chunk : Node3D
 	{
 		surfaceTool = new();
 		meshInstance = GetNode<MeshInstance3D>("Mesh");
-		// Rebuild();
 	}
 
 	public static Vector2I IndexToVector(byte index)
@@ -85,8 +84,6 @@ public partial class Chunk : Node3D
 	{
 		Vector3I realPosition = new(voxelPosition.X + (ChunkPosition.X * CHUNK_SIZE.X), voxelPosition.Y, voxelPosition.Z + (ChunkPosition.Y * CHUNK_SIZE.X));
 		Vector2I textureAtlasOffset = IndexToVector(TEXTURE_LOOKUP[voxel.id]);
-
-		// GD.Print(textureAtlasOffset);
 
 		if (!IsVoxelInChunk(voxelPosition + FRONT.normal))
 			RebuildSide(realPosition, FRONT, textureAtlasOffset, voxel.light);
@@ -125,49 +122,18 @@ public partial class Chunk : Node3D
 		Vector2 uvC = uvOffset + new Vector2(0, height);
 		Vector2 uvD = uvOffset + new Vector2(width, height);
 
-		// float light = GD.Randf();
-		// light = ((Vector3)side.normal).Dot(Vector3.Up) > 0.5 ? (byte)255 : (byte)140;
-
+		// this is probably horrible
 		if (side.normal == Vector3I.Up) light = 255;
 		else if (side.normal == Vector3I.Back) light = 180;
 		else if (side.normal == Vector3I.Right) light = 165;
 		else light = 135;
 
-		// for (int i = 0; i < 3; i++)
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
-		surfaceTool.AddTriangleFan(new Vector3[] { b, c, a }, new Vector2[] { uvB, uvC, uvA	});	
-		// for (int i = 0; i < 3; i++)
+		surfaceTool.AddTriangleFan(new Vector3[] { b, c, a }, new Vector2[] { uvB, uvC, uvA	});
+
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
 		surfaceTool.AddTriangleFan(new Vector3[] { b, d, c }, new Vector2[] { uvB, uvD, uvC });
-
-		// GetTree().Quit();
-		// return;
 	}
-
-	// private int BoolToInt(bool x)
-	// {
-	// 	return x ? 1 : 0;
-	// }
-
-	// private int VertexAO(bool side1, bool side2, bool corner) {
-	// 	if(side1 && side2) {
-	// 		return 0;
-	// 	}
-	// 	return 3 - (BoolToInt(side1) + BoolToInt(side2) + BoolToInt(corner));
-	// }
-
-	// public void BakeAO()
-	// {
-	// 	for (int x = 0; x < CHUNK_SIZE.X; x++)
-	// 	{
-	// 		for (int y = 0; y < CHUNK_SIZE.Y; y++)
-	// 		{
-	// 			for (int z = 0; z < CHUNK_SIZE.X; z++)
-	// 			{
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	public void SetVoxel(Vector3I position, byte id)
 	{
@@ -203,9 +169,7 @@ public partial class Chunk : Node3D
         {
             Seed = 356,
             Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0)
-        };
-
-        // GD.Print(noise.Offset);
+        };			
 
 		for (int x = 0; x < CHUNK_SIZE.X; x++)
 		{
@@ -242,7 +206,7 @@ public partial class Chunk : Node3D
 		ArrayMesh arrayMesh = new();	
 
 		surfaceTool.Begin(Mesh.PrimitiveType.Triangles);
-		surfaceTool.SetSmoothGroup(uint.MaxValue); // uint.MaxValue means -1
+		surfaceTool.SetSmoothGroup(uint.MaxValue); // means -1
 
 		surfaceTool.SetCustomFormat(0, SurfaceTool.CustomFormat.RFloat);
 
@@ -263,7 +227,7 @@ public partial class Chunk : Node3D
 		// BakeAO();
 
 		surfaceTool.GenerateNormals();
-		// surfaceTool.GenerateTangents();
+		// do we need tangents...?
 		surfaceTool.Commit(arrayMesh);
 		meshInstance.Mesh = arrayMesh;
 		meshInstance.CreateTrimeshCollision();
