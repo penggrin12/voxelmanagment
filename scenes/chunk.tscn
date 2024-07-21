@@ -7,6 +7,9 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ynrrk"]
 render_priority = 0
 shader = ExtResource("2_0b4to")
+shader_parameter/CURVATURE = 1.995
+shader_parameter/CURVATURE_ACTIVE = false
+shader_parameter/CURVATURE_DISTANCE = 20.17
 shader_parameter/tex = ExtResource("3_5xq0x")
 
 [node name="Chunk" type="Node3D"]

@@ -25,6 +25,7 @@ material = SubResource("StandardMaterial3D_e0hav")
 size = Vector2(128, 128)
 
 [node name="Skysphere" type="Node3D"]
+visible = false
 script = ExtResource("1_2vkn4")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]

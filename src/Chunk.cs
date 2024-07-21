@@ -14,7 +14,7 @@ public partial class Chunk : Node3D
     private static readonly byte[] TEXTURE_LOOKUP = new byte[]
 	{
 		0, // not actually rendered
-		6, 3, 0
+		37, 1, 2, 0, 3, 4, 7
 	};
 
     private static readonly List<Vector3I> VERTICES = new()
@@ -46,7 +46,7 @@ public partial class Chunk : Node3D
 	private static readonly Side FRONT = new() { vertex0 = 3, vertex1 = 2, vertex2 = 1, vertex3 = 0, normal = new Vector3I(0, 0, -1)};
 
 	private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
-	public static readonly Vector2I CHUNK_SIZE = new(16, 64);
+	public static readonly Vector2I CHUNK_SIZE = new(16, 128);
 
 	public override void _Ready()
 	{
@@ -164,24 +164,49 @@ public partial class Chunk : Node3D
 	/// Natural generation first pass
 	/// </summary>
 	public void Regenerate()
-	{
-        FastNoiseLite noise = new()
-        {
-            Seed = 356,
-            Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0)
-        };			
-
+	{	
 		for (int x = 0; x < CHUNK_SIZE.X; x++)
 		{
 			for (int z = 0; z < CHUNK_SIZE.X; z++)
 			{
-				int colHeight = (int)(((noise.GetNoise2D(x, z) + 1f) / 2f) * CHUNK_SIZE.Y);
+				FastNoiseLite baseNoise = Find.World.baseNoise;
+				baseNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
+				int colHeight = (int)(((baseNoise.GetNoise2D(x, z) + 1f) / 2f) * (CHUNK_SIZE.Y * 0.75));
+				// int colHeight = 0;
+
+					foreach (FastNoiseLite additiveNoise in Find.World.additiveNoises)
+					{
+						FastNoiseLite thisNoise = additiveNoise;
+						thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
+						colHeight = Mathf.Max(colHeight, colHeight + (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
+					}
+
+				colHeight /= 4;
+
+				VoxelID voxelID = VoxelID.VOID;
+
+				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelID.DIRT;
+				if (colHeight <= CHUNK_SIZE.Y / 4.5 + ((GD.Randf() - 0.5) * 1.5)) voxelID = VoxelID.GRASS;
+				else voxelID = VoxelID.STONE;
 
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
-					if (colHeight >= y)
-						SetVoxel(new Vector3I(x, y, z), 1);
-						// voxels[x][y][z] = new Voxel() {id = 1, position = new Vector3I(x, y, z)};
+					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.HARDSTONE); continue; }
+					if (y > colHeight) continue;
+
+					if (voxelID == VoxelID.GRASS)
+					{
+						if (y == colHeight)
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.GRASS);
+						else if (y < colHeight && y >= colHeight - GD.RandRange(3, 5))
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.DIRT);
+						else
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.STONE);
+					}
+					else
+					{
+						SetVoxel(new Vector3I(x, y, z), (byte)voxelID);
+					}
 				}
 			}
 		}

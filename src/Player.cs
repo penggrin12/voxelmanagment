@@ -103,20 +103,14 @@ public partial class Player : BasePlayer
 		if (Input.IsActionJustPressed("place"))
 		{
 			Vector3I newVoxelPosition = voxelPosition + (Vector3I)collisionNormal;
-			Vector2I newChunkPosition = new Vector2I(
-				((Vector3I)(collisionAt + (collisionNormal * 0.05f))).X / Chunk.CHUNK_SIZE.X,
-				((Vector3I)(collisionAt + (collisionNormal * 0.05f))).Z / Chunk.CHUNK_SIZE.X
-			);
 
 			// TODO: fuck math, me and my homies use:
-			if (newVoxelPosition.X < 0) newVoxelPosition.X = Chunk.CHUNK_SIZE.X - 1;
-			if (newVoxelPosition.Z < 0) newVoxelPosition.Z = Chunk.CHUNK_SIZE.X - 1;
+			if (newVoxelPosition.X < 0) return;
+			if (newVoxelPosition.Z < 0) return;
 
-			if (newVoxelPosition.X >= Chunk.CHUNK_SIZE.X) newVoxelPosition.X = 0;
-			if (newVoxelPosition.Z >= Chunk.CHUNK_SIZE.X) newVoxelPosition.Z = 0;
+			if (newVoxelPosition.X >= Chunk.CHUNK_SIZE.X) return;
+			if (newVoxelPosition.Z >= Chunk.CHUNK_SIZE.X) return;
 			//
-
-			if (chunk.ChunkPosition != newChunkPosition) chunk = world.GetChunk(newChunkPosition);
 
 			chunk.SetVoxel(newVoxelPosition, 2);
 			chunk.Rebuild();

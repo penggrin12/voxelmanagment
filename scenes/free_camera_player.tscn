@@ -1,11 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://dauj6u1r6vrht"]
+[gd_scene load_steps=4 format=3 uid="uid://dauj6u1r6vrht"]
 
 [ext_resource type="Script" path="res://src/FreeCamera.cs" id="1_hyijs"]
 [ext_resource type="Script" path="res://src/FreeCameraPlayer.cs" id="1_uut6o"]
+[ext_resource type="PackedScene" uid="uid://cidu3e31n6jpo" path="res://scenes/skysphere.tscn" id="2_jfbh6"]
 
 [node name="FreeCameraPlayer" type="CharacterBody3D"]
 script = ExtResource("1_uut6o")
 
+[node name="Skysphere" parent="." instance=ExtResource("2_jfbh6")]
+
 [node name="Camera3D" type="Camera3D" parent="."]
 current = true
 script = ExtResource("1_hyijs")
+
+[node name="RemoteTransform3D" type="RemoteTransform3D" parent="Camera3D"]
+remote_path = NodePath("../../Skysphere")
+update_rotation = false
+update_scale = false

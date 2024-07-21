@@ -1,6 +1,6 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxelTest", "VoxelTest.csproj", "{CDFC4288-DAEA-4413-825C-13E108B8BA70}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxelManagment", "VoxelManagment.csproj", "{CDFC4288-DAEA-4413-825C-13E108B8BA70}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

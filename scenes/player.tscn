@@ -1,9 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://d37ihmnshv7a1"]
+[gd_scene load_steps=6 format=3 uid="uid://d37ihmnshv7a1"]
 
 [ext_resource type="Script" path="res://src/Player.cs" id="1_mddyi"]
 [ext_resource type="PackedScene" uid="uid://xtw3o2au4p4q" path="res://scenes/crosshair.tscn" id="3_4ndio"]
 [ext_resource type="PackedScene" uid="uid://thwpwy52rvv7" path="res://scenes/voxel_break_decoration.tscn" id="3_mx212"]
-[ext_resource type="PackedScene" uid="uid://dxjfm7sn0808l" path="res://scenes/hotbar.tscn" id="4_pkkie"]
 [ext_resource type="PackedScene" uid="uid://cidu3e31n6jpo" path="res://scenes/skysphere.tscn" id="5_5chm5"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_m278b"]
@@ -24,9 +23,6 @@ jumpImpulse = 8.5
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="Crosshair" parent="CanvasLayer" instance=ExtResource("3_4ndio")]
-
-[node name="Hotbar" parent="CanvasLayer" instance=ExtResource("4_pkkie")]
-visible = false
 
 [node name="RemoteTransform3D" type="RemoteTransform3D" parent="."]
 remote_path = NodePath("../Skysphere")
