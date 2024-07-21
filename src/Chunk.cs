@@ -46,7 +46,7 @@ public partial class Chunk : Node3D
 	private static readonly Side FRONT = new() { vertex0 = 3, vertex1 = 2, vertex2 = 1, vertex3 = 0, normal = new Vector3I(0, 0, -1)};
 
 	private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
-	public static readonly Vector2I CHUNK_SIZE = new(16, 128);
+	public static readonly Vector2I CHUNK_SIZE = new(16, 64);
 
 	public override void _Ready()
 	{
@@ -172,21 +172,23 @@ public partial class Chunk : Node3D
 				FastNoiseLite baseNoise = Find.World.baseNoise;
 				baseNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
 				int colHeight = (int)(((baseNoise.GetNoise2D(x, z) + 1f) / 2f) * (CHUNK_SIZE.Y * 0.75));
-				// int colHeight = 0;
 
-					foreach (FastNoiseLite additiveNoise in Find.World.additiveNoises)
-					{
-						FastNoiseLite thisNoise = additiveNoise;
-						thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
-						colHeight = Mathf.Max(colHeight, colHeight + (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
-					}
+				colHeight = (int)(colHeight * 2f);
+
+				foreach (FastNoiseLite additiveNoise in Find.World.additiveNoises)
+				{
+					FastNoiseLite thisNoise = additiveNoise;
+					thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
+					colHeight = Mathf.Max(colHeight, colHeight + (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
+				}
 
 				colHeight /= 4;
+				colHeight += CHUNK_SIZE.Y / 4;
 
 				VoxelID voxelID = VoxelID.VOID;
 
 				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelID.DIRT;
-				if (colHeight <= CHUNK_SIZE.Y / 4.5 + ((GD.Randf() - 0.5) * 1.5)) voxelID = VoxelID.GRASS;
+				if (colHeight <= CHUNK_SIZE.Y / 2 + ((GD.Randf() - 0.5) * 1.5)) voxelID = VoxelID.GRASS;
 				else voxelID = VoxelID.STONE;
 
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)

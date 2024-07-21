@@ -10,7 +10,7 @@ public partial class World : Node3D
     [Export] public PackedScene chunkScene;
     [Export] public PackedScene playerScene;
     private Dictionary<Vector2I, Chunk> chunks = new();
-    private const int RENDER_DISTANCE = 4;
+    private const int RENDER_DISTANCE = 8;
 
     [Export] bool onlyOneChunk = false;
 
@@ -69,6 +69,8 @@ public partial class World : Node3D
         SetChunk(newChunk.ChunkPosition, newChunk);
         chunksToGenerate.Enqueue(newChunk.ChunkPosition);
         chunksToRender.Enqueue(newChunk.ChunkPosition);
+        
+        DebugDraw.Box(new Vector3(chunkPosition.X * (Chunk.CHUNK_SIZE.X), Chunk.CHUNK_SIZE.Y / 2, chunkPosition.Y * (Chunk.CHUNK_SIZE.X)), new Vector3(Chunk.CHUNK_SIZE.X, Chunk.CHUNK_SIZE.Y, Chunk.CHUNK_SIZE.X), duration: int.MaxValue);
     }
 
     private void HandleUpdateRenderDistance(Vector2 from)
@@ -123,7 +125,7 @@ public partial class World : Node3D
         player.world = this;
         player.Position = new Vector3(
             Chunk.CHUNK_SIZE.X / 2,
-            Chunk.CHUNK_SIZE.Y / 1.5f,
+            Chunk.CHUNK_SIZE.Y * 2,
             Chunk.CHUNK_SIZE.X / 2
         );
 
