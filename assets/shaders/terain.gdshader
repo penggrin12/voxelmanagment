@@ -4,7 +4,7 @@ render_mode unshaded;
 uniform float CURVATURE;
 uniform bool CURVATURE_ACTIVE = false;
 uniform float CURVATURE_DISTANCE;
-uniform sampler2D tex: filter_nearest;
+uniform sampler2D tex: source_color, filter_nearest;
 varying float light;
 
 void vertex() {
