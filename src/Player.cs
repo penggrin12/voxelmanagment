@@ -82,7 +82,7 @@ public partial class Player : BasePlayer
 		Vector3 collisionAt = ray.GetCollisionPoint();
 		Vector3I voxelPosition = (Vector3I)(collisionAt - collisionNormal * 0.05f - new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
 
-		if (!chunk.IsVoxelInChunk(voxelPosition))
+		if (!chunk.IsVoxelSolid(voxelPosition))
 			return;
 
 		if (Input.IsActionJustPressed("break"))

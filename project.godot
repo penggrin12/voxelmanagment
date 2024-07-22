@@ -22,8 +22,8 @@ DebugDraw="*res://addons/debug_drawing/DebugDraw.cs"
 
 [debug_drawing]
 
-MaxPoolSize=4000
-StartingPoolSize=4000
+MaxPoolSize=10000
+StartingPoolSize=10000
 
 [dotnet]
 

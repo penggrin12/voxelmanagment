@@ -10,10 +10,9 @@ namespace Game;
 public partial class FreeCameraPlayer : BasePlayer
 {
     private Camera3D camera;
-    // private Vector3 drawBoxAt = Vector3.Zero;
 
-    private Location agentStartLocation = new();
-    private Location agentEndLocation = new();
+    private Location agentStartLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(0, 45, 0) };
+    private Location agentEndLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(3, 42, 0) };
 
     public override void _Ready()
     {
@@ -24,15 +23,25 @@ public partial class FreeCameraPlayer : BasePlayer
     {
         HandleUpdateRenderDistance(camera.Position);
 
+        Find.DebugUi.Get<Label>("Position").Text = $"{camera.Position.X + (Chunk.CHUNK_SIZE.X / 2):n3}, {camera.Position.Y:n3}, {camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2):n3} ( {Mathf.Wrap(camera.Position.X + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(camera.Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3} )";
+
         Vector2I chunkPosition = new(
             Mathf.FloorToInt(camera.GlobalPosition.X / Chunk.CHUNK_SIZE.X),
             Mathf.FloorToInt(camera.GlobalPosition.Z / Chunk.CHUNK_SIZE.X)
         );
-        Vector3I voxelPosition = new(
-            Mathf.Wrap((int)camera.GlobalPosition.X, 0, Chunk.CHUNK_SIZE.X),
-            Mathf.Wrap((int)camera.GlobalPosition.Y, 0, Chunk.CHUNK_SIZE.Y),
-            Mathf.Wrap((int)camera.GlobalPosition.Z, 0, Chunk.CHUNK_SIZE.X)
-        );
+
+        if (!world.HasChunk(chunkPosition))
+            return; // not in a chunk (loading void..?)
+
+		Chunk inChunk = world.GetChunk(chunkPosition);
+		Vector3 cameraAt = camera.GlobalPosition;
+		Vector3I voxelPosition = (Vector3I)(cameraAt - new Vector3(inChunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, inChunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
+
+		if (!Chunk.IsVoxelInBounds(voxelPosition))
+		{
+            GD.Print("not in chunk");
+            return;
+        }
 
         if (Input.IsActionPressed("debug_agent_spawnpoint"))
 		{
@@ -44,94 +53,170 @@ public partial class FreeCameraPlayer : BasePlayer
             agentEndLocation = new() { chunkPosition = chunkPosition, voxelPosition = voxelPosition };
 		}
 
-        DebugDraw.Box(
-            (agentStartLocation.voxelPosition * new Vector3I(agentStartLocation.chunkPosition.X + 1, 1, agentStartLocation.chunkPosition.Y + 1)) + new Vector3(0.5f, 0.5f, 0.5f),
-            new Vector3(1, 1, 1),
-            Colors.Green
-        );
+        if (Settings.ShowDebugDraw)
+        {
+            DebugDraw.Box(
+                agentStartLocation.voxelPosition
+                + new Vector3I(agentStartLocation.chunkPosition.X * Chunk.CHUNK_SIZE.X, 0, agentStartLocation.chunkPosition.Y * Chunk.CHUNK_SIZE.X)
+                + new Vector3(0.5f, 0.5f, 0.5f),
+                new Vector3(1, 1, 1),
+                Colors.Green,
+                drawSolid: true
+            );
 
-        DebugDraw.Box(
-            (agentEndLocation.voxelPosition * new Vector3I(agentEndLocation.chunkPosition.X + 1, 1, agentEndLocation.chunkPosition.Y + 1)) + new Vector3(0.5f, 0.5f, 0.5f),
-            new Vector3(1, 1, 1),
-            Colors.Blue
-        );
+            DebugDraw.Box(
+                agentEndLocation.voxelPosition
+                + new Vector3I(agentEndLocation.chunkPosition.X * Chunk.CHUNK_SIZE.X, 0, agentEndLocation.chunkPosition.Y * Chunk.CHUNK_SIZE.X)
+                + new Vector3(0.5f, 0.5f, 0.5f),
+                new Vector3(1, 1, 1),
+                Colors.Blue,
+                drawSolid: true
+            );
+        }
 
         if (Input.IsActionJustPressed("debug_agent"))
         {
             AStar3D aStar = new();
+            List<(long, long)> connectionsMade = new();
 
-            Chunk thisChunk = Find.World.GetChunk(Vector2I.Zero);
-
-            for (byte x = 0; x < Chunk.CHUNK_SIZE.X; x++)
+            foreach (Chunk chunk in world.GetAllChunks())
             {
-                for (byte z = 0; z < Chunk.CHUNK_SIZE.X; z++)
+                foreach (long point in chunk.navPoints)
                 {
-                    for (byte y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
+                    DataPacking.UnpackData((ulong)point, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+                    aStar.AddPoint(point, new Vector3(voxelX * (chunkX + 1), voxelY, voxelZ * (chunkY + 1)));
+                }
+
+                foreach ((long point1, long point2) in chunk.navConnections)
+                {
+                    aStar.ConnectPoints(point1, point2);
+                    if (Settings.ShowEvenMoreDebugDraw)
+                        connectionsMade.Add((point1, point2));
+                }
+            }
+
+            foreach (Chunk chunk in world.GetAllChunks())
+            {
+                Chunk otherChunk;
+                if (world.HasChunk(chunk.ChunkPosition + Vector2I.Right))
+                {
+                    otherChunk = world.GetChunk(chunk.ChunkPosition + Vector2I.Right);
+                    int x = Chunk.CHUNK_SIZE.X - 1;
+
+                    for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
                     {
-                        if (y + 1 >= Chunk.CHUNK_SIZE.Y) continue; // TODO too high dont allow
-                        if (y - 1 < 0) continue; // too low dont allow
+                        for (int z = 0; z < Chunk.CHUNK_SIZE.X; z++)
+                        {
+                            Vector3I thisVoxelPosition = new(x, y, z);
 
-                        if (thisChunk.voxels[x][y + 1][z].id > 0) continue; // voxel above is air
-                        if (thisChunk.voxels[x][y][z].id > 0) continue; // this voxel is air
-                        if (thisChunk.voxels[x][y - 1][z].id <= 0) continue; // voxel below is solid
+                            long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
 
-                        Vector3I pos = new(x, y, z);
-                        aStar.AddPoint((long)DataPacking.PackData(x, y, z, (short)thisChunk.ChunkPosition.X, (short)thisChunk.ChunkPosition.Y), pos, 1);
+                            if (!aStar.HasPoint(point1)) continue;
+                            long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)0, (byte)(y - 1), (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointA); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointA));}
+                            long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)0, (byte)y, (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointB); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointB));}
+                            long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)0, (byte)(y + 1), (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointC); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointC));}
+                        }
+                    }
+                }
+                if (world.HasChunk(chunk.ChunkPosition + Vector2I.Left))
+                {
+                    otherChunk = world.GetChunk(chunk.ChunkPosition + Vector2I.Left);
+                    int x = 0;
 
-                        // DebugDraw.Sphere(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f), 0.15f, Utils.GetRandomColor(), 30, true);
+                    for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
+                    {
+                        for (int z = 0; z < Chunk.CHUNK_SIZE.X; z++)
+                        {
+                            Vector3I thisVoxelPosition = new(x, y, z);
+
+                            long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
+
+                            if (!aStar.HasPoint(point1)) continue;
+                            long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)(Chunk.CHUNK_SIZE.X - 1), (byte)(y - 1), (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointA); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointA));}
+                            long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)(Chunk.CHUNK_SIZE.X - 1), (byte)y, (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointB); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointB));}
+                            long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)(Chunk.CHUNK_SIZE.X - 1), (byte)(y + 1), (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointC); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointC));}
+                        }
+                    }
+                }
+                if (world.HasChunk(chunk.ChunkPosition + Vector2I.Down))
+                {
+                    otherChunk = world.GetChunk(chunk.ChunkPosition + Vector2I.Down);
+                    int z = Chunk.CHUNK_SIZE.X - 1;
+
+                    for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
+                    {
+                        for (int x = 0; x < Chunk.CHUNK_SIZE.X; x++)
+                        {
+                            Vector3I thisVoxelPosition = new(x, y, z);
+
+                            long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
+
+                            if (!aStar.HasPoint(point1)) continue;
+                            long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)x, (byte)(y - 1), (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointA); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointA));}
+                            long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)x, (byte)y, (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointB); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointB));}
+                            long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)x, (byte)(y + 1), (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointC); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointC));}
+                        }
+                    }
+                }
+                if (world.HasChunk(chunk.ChunkPosition + Vector2I.Up))
+                {
+                    otherChunk = world.GetChunk(chunk.ChunkPosition + Vector2I.Up);
+                    int z = 0;
+
+                    for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
+                    {
+                        for (int x = 0; x < Chunk.CHUNK_SIZE.X; x++)
+                        {
+                            Vector3I thisVoxelPosition = new(x, y, z);
+
+                            long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
+
+                            if (!aStar.HasPoint(point1)) continue;
+                            long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)x, (byte)(y - 1), (byte)(Chunk.CHUNK_SIZE.X - 1), (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointA); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointA));}
+                            long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)x, (byte)y, (byte)(Chunk.CHUNK_SIZE.X - 1), (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointB); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointB));}
+                            long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)x, (byte)(y + 1), (byte)(Chunk.CHUNK_SIZE.X - 1), (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                                {aStar.ConnectPoints(point1, pointC); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointC));}
+                        }
                     }
                 }
             }
 
-            GD.Print($"points: {aStar.GetPointCount()}");
-
-            foreach (long pointId in aStar.GetPointIds())
+            foreach ((long, long) connection in connectionsMade)
             {
-                Vector3 pos = aStar.GetPointPosition(pointId);
-                // DebugDraw.Point(pos + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Black, duration: 30);
+                DataPacking.UnpackData((ulong)connection.Item1, out byte voxel1X, out byte voxel1Y, out byte voxel1Z, out short chunk1X, out short chunk1Y);
+                DataPacking.UnpackData((ulong)connection.Item2, out byte voxel2X, out byte voxel2Y, out byte voxel2Z, out short chunk2X, out short chunk2Y);
 
-                DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
-                Chunk thissChunk = Find.World.GetChunk(chunkX, chunkY);
-
-                Vector3I voxelOrigin = new(voxelX, voxelY, voxelZ);
-
-                for (int x = -1; x <= 1; x++)
-                {
-                    for (int z = -1; z <= 1; z++)
-                    {
-                        for (int y = -1; y <= 1; y++)
-                        {
-                            if (x == 0 && y == 0 && z == 0) continue;
-                            Vector3I dest = new(voxelOrigin.X + x, voxelOrigin.Y + y, voxelOrigin.Z + z);
-                            if (new Vector3(dest.X, voxelOrigin.Y, dest.Z).DistanceTo(voxelOrigin) > 1f) continue; // not allowing diagonals. TODO: this is horrible
-                            if (!Chunk.IsVoxelInBounds(dest)) continue;
-                            if ((dest.Y <= 0) || (dest.Y > Chunk.CHUNK_SIZE.Y)) continue;
-
-                            long destPacked = (long)DataPacking.PackData((byte)dest.X, (byte)dest.Y, (byte)dest.Z, (short)thissChunk.ChunkPosition.X, (short)thissChunk.ChunkPosition.Y);
-
-                            if (aStar.ArePointsConnected(pointId, destPacked)) continue;
-
-                            if (thissChunk.voxels[dest.X][dest.Y][dest.Z].id > 0) continue;
-                            if (thissChunk.voxels[dest.X][dest.Y - 1][dest.Z].id <= 0) continue;
-                            if (thissChunk.voxels[dest.X][dest.Y + 1][dest.Z].id > 0) continue;
-
-                            aStar.ConnectPoints(pointId, destPacked);
-
-                            // DebugDraw.Line(
-                            //     new Vector3(voxelOrigin.X + 0.5f, voxelOrigin.Y + 0.5f, voxelOrigin.Z + 0.5f),
-                            //     new Vector3(voxelOrigin.X + 0.5f + x, voxelOrigin.Y + 0.5f + y, voxelOrigin.Z + 0.5f + z),
-                            //     color: Colors.Red,
-                            //     duration: 30
-                            // );
-                        }
-                    }
-                }
+                DebugDraw.Line(
+                    new Vector3(voxel1X + chunk1X * Chunk.CHUNK_SIZE.X + 0.5f, voxel1Y + 0.5f, voxel1Z + chunk1Y * Chunk.CHUNK_SIZE.X + 0.5f),
+                    new Vector3(voxel2X + chunk2X * Chunk.CHUNK_SIZE.X + 0.5f, voxel2Y + 0.5f, voxel2Z + chunk2Y * Chunk.CHUNK_SIZE.X + 0.5f),
+                    color: Colors.Red,
+                    duration: 15
+                );
             }
 
             bool GetPath(Location from, Location to, out long[] points, out Vector3I[] voxelPositions)
             {
                 if (!Chunk.IsVoxelInBounds(from.voxelPosition)) {points = null; voxelPositions = null; return false;};
                 if (!Chunk.IsVoxelInBounds(to.voxelPosition)) {points = null; voxelPositions = null; return false;};
+
+                //////// TODO: we need ref for recursion (?) but then we need to know how long `points` and `voxelPositions` gonna be where GetPath used
+                // Chunk fromChunk = thisWorld.GetChunk(from.chunkPosition);
+                // if ((from.voxelPosition.Y < Chunk.CHUNK_SIZE.Y) && (fromChunk.voxels[from.voxelPosition.X][from.voxelPosition.Y - 1][from.voxelPosition.Z].id <= 0))
+                //     return GetPath(new Location() { chunkPosition = from.chunkPosition, voxelPosition = new Vector3I(from.voxelPosition.X, from.voxelPosition.Y - 1, from.voxelPosition.Z) }, to, ref points, ref voxelPositions);
+                // Chunk toChunk = thisWorld.GetChunk(to.chunkPosition);
+                // if ((to.voxelPosition.Y < Chunk.CHUNK_SIZE.Y) && (toChunk.voxels[to.voxelPosition.X][to.voxelPosition.Y - 1][to.voxelPosition.Z].id <= 0))
+                //     return GetPath(from, new Location() { chunkPosition = to.chunkPosition, voxelPosition = new Vector3I(to.voxelPosition.X, to.voxelPosition.Y - 1, to.voxelPosition.Z) }, ref points, ref voxelPositions);
 
                 long point1 = (long)DataPacking.PackData((byte)from.voxelPosition.X, (byte)from.voxelPosition.Y, (byte)from.voxelPosition.Z, (short)from.chunkPosition.X, (short)from.chunkPosition.Y);
                 long point2 = (long)DataPacking.PackData((byte)to.voxelPosition.X, (byte)to.voxelPosition.Y, (byte)to.voxelPosition.Z, (short)to.chunkPosition.X, (short)to.chunkPosition.Y);
@@ -141,44 +226,45 @@ public partial class FreeCameraPlayer : BasePlayer
                 points = aStar.GetIdPath(point1, point2);
                 voxelPositions = new Vector3I[points.Length];
                 
-                foreach  (var (value, i) in points.Select((value, i) => ( value, i )))
+                foreach (var (value, i) in points.Select((value, i) => ( value, i )))
                     voxelPositions[i] = (Vector3I)aStar.GetPointPosition(value);
                 
                 return true;
             }
 
-            // foreach (long point in aStar.GetPointIds())
-            // {
-            //     DataPacking.UnpackData((ulong)point, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
-            //     foreach (long pointTo in aStar.GetPointConnections(point))
-            //     {
-            //         DataPacking.UnpackData((ulong)pointTo, out byte voxel2X, out byte voxel2Y, out byte voxel2Z, out short chunk2X, out short chunk2Y);
-            //         DebugDraw.Line(
-            //             new Vector3(voxelX + 0.5f, voxelY + 0.5f, voxelZ + 0.5f),
-            //             new Vector3(0.5f + voxel2X, 0.5f + voxel2Y, 0.5f + voxel2Z),
-            //             color: Colors.Purple,
-            //             duration: 30
-            //         );
-            //     }
-            // }
-
-            // foreach (long point in IsPathPossible(agentStartLocation, agentEndLocation))
-            // {
-            //     Vector3I pos = (Vector3I)aStar.GetPointPosition(point);
-            //     // DebugDraw.Sphere(new Vector3(pos.X + 0.5f, pos.Y + 0.5f, pos.Z + 0.5f), 0.15f, Utils.GetRandomColor(), 30, true);
-            //     // DebugDraw.Point(point, color: Colors.Blue, duration: 30);
-            // }
-
-            bool pathSuccess = GetPath(agentStartLocation, agentEndLocation, out long[] points, out Vector3I[] voxels);
-
-            List<Vector3> lines = new();
-
-            foreach (Vector3I item in voxels)
+            if (!GetPath(agentStartLocation, agentEndLocation, out long[] points, out Vector3I[] voxels))
             {
-                lines.Add(new Vector3(item.X + 0.5f, item.Y + 0.5f, item.Z + 0.5f));
+                GD.Print("no path");
+                return;
             }
 
-            DebugDraw.Lines(lines.ToArray(), color: Colors.Black, duration: 30);
+            List<Vector3> linePositions = new();
+
+            foreach (long point in points)
+            {
+                DataPacking.UnpackData((ulong)point, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+
+                Vector3 position = new(
+                    voxelX + chunkX * Chunk.CHUNK_SIZE.X + 0.5f,
+                    voxelY + 0.5f,
+                    voxelZ + chunkY * Chunk.CHUNK_SIZE.X + 0.5f
+                );
+                linePositions.Add(position);
+
+                if (Settings.ShowDebugDraw)
+                {
+                    DebugDraw.Sphere(
+                        position,
+                        radius: 0.25f,
+                        color: Utils.GetRandomColor(),
+                        drawSolid: true,
+                        duration: 30
+                    );
+                }
+            }
+
+            if (Settings.ShowDebugDraw)
+                DebugDraw.Lines(linePositions.ToArray(), color: Colors.Black, duration: 5);
         }
     }
 }   

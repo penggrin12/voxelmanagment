@@ -10,9 +10,9 @@ public partial class World : Node3D
     [Export] public PackedScene chunkScene;
     [Export] public PackedScene playerScene;
     private Dictionary<Vector2I, Chunk> chunks = new();
-    private const int RENDER_DISTANCE = 8;
 
     [Export] bool onlyOneChunk = false;
+    [Export] bool allowUpdatingRenderDistance = true;
 
     [Signal] public delegate void UpdateRenderDistanceEventHandler(Vector2 from); // useless...?
 
@@ -48,10 +48,21 @@ public partial class World : Node3D
         }
     }
 
+    public bool HasChunk(int x, int y) { return HasChunk(new Vector2I(x, y)); }
+    public bool HasChunk(Vector2I position)
+    {
+        return chunks.ContainsKey(position);
+    }
+
     public Chunk GetChunk(int x, int y) { return GetChunk(new Vector2I(x, y)); }
     public Chunk GetChunk(Vector2I position)
     {
         return chunks[position];
+    }
+
+    public Chunk[] GetAllChunks()
+    {
+        return chunks.Values.ToArray();
     }
 
     public void SetChunk(int x, int y, Chunk chunk) { SetChunk(new Vector2I(x, y), chunk); }
@@ -69,18 +80,16 @@ public partial class World : Node3D
         SetChunk(newChunk.ChunkPosition, newChunk);
         chunksToGenerate.Enqueue(newChunk.ChunkPosition);
         chunksToRender.Enqueue(newChunk.ChunkPosition);
-        
-        DebugDraw.Box(new Vector3(chunkPosition.X * (Chunk.CHUNK_SIZE.X), Chunk.CHUNK_SIZE.Y / 2, chunkPosition.Y * (Chunk.CHUNK_SIZE.X)), new Vector3(Chunk.CHUNK_SIZE.X, Chunk.CHUNK_SIZE.Y, Chunk.CHUNK_SIZE.X), duration: int.MaxValue);
     }
 
     private void HandleUpdateRenderDistance(Vector2 from)
     {
-        for (int x = Mathf.FloorToInt(from.X - RENDER_DISTANCE); x < Mathf.CeilToInt(from.X + RENDER_DISTANCE); x++)
+        for (int x = Mathf.FloorToInt(from.X - Settings.RenderDistance); x < Mathf.CeilToInt(from.X + Settings.RenderDistance+1); x++)
         {   
-            for (int y = Mathf.FloorToInt(from.Y - RENDER_DISTANCE); y < Mathf.CeilToInt(from.Y + RENDER_DISTANCE); y++)
+            for (int y = Mathf.FloorToInt(from.Y - Settings.RenderDistance); y < Mathf.CeilToInt(from.Y + Settings.RenderDistance+1); y++)
             {
                 Vector2I chunkPositionToMake = new(x, y);
-                if ((from.DistanceTo(new Vector2(x, y)) <= RENDER_DISTANCE) && (!chunks.ContainsKey(chunkPositionToMake)))
+                if ((from.DistanceTo(new Vector2(x, y)) <= Settings.RenderDistance) && (!chunks.ContainsKey(chunkPositionToMake)))
                 {
                     GD.Print($"gonna make {chunkPositionToMake}");
                     MakeChunk(chunkPositionToMake);
@@ -98,7 +107,7 @@ public partial class World : Node3D
         List<Vector2I> chunksPositions = chunks.Keys.ToList();
         foreach (Vector2I chunkPosition in chunksPositions)
         {
-            if (from.DistanceTo((Vector2)chunkPosition) >= RENDER_DISTANCE * 1.5f)
+            if (from.DistanceTo((Vector2)chunkPosition) >= Settings.RenderDistance * 1.5f)
             {
                 GD.Print(chunkPosition);
 
@@ -113,10 +122,12 @@ public partial class World : Node3D
 
 	public override void _Ready()
 	{
-        if (!onlyOneChunk)
-            UpdateRenderDistance += HandleUpdateRenderDistance;
-        else
+        if (onlyOneChunk)
             MakeChunk(Vector2I.Zero);
+        else if (!allowUpdatingRenderDistance)
+            HandleUpdateRenderDistance(Vector2.Zero);
+        else
+            UpdateRenderDistance += HandleUpdateRenderDistance;
 
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();
@@ -125,7 +136,7 @@ public partial class World : Node3D
         player.world = this;
         player.Position = new Vector3(
             Chunk.CHUNK_SIZE.X / 2,
-            Chunk.CHUNK_SIZE.Y * 2,
+            Chunk.CHUNK_SIZE.Y,
             Chunk.CHUNK_SIZE.X / 2
         );
 
@@ -134,6 +145,14 @@ public partial class World : Node3D
 
     public override void _Process(double delta)
     {
+        if (Settings.ShowDebugDraw)
+        {
+            foreach (Chunk chunk in GetAllChunks())
+            {
+                DebugDraw.Box(new Vector3(chunk.ChunkPosition.X * (Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2), Chunk.CHUNK_SIZE.Y / 2, chunk.ChunkPosition.Y * (Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2)), new Vector3(Chunk.CHUNK_SIZE.X, Chunk.CHUNK_SIZE.Y, Chunk.CHUNK_SIZE.X));
+            }
+        }
+
         if (!Find.DebugUi.Enabled) return;
 
         Find.DebugUi.Get<Label>("Memory").Text = $"MEM: {Performance.GetMonitor(Performance.Monitor.MemoryStatic) / 1000 / 1000:n0} mB / {Performance.GetMonitor(Performance.Monitor.MemoryStaticMax) / 1000 / 1000:n0} mB";

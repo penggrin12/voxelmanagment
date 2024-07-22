@@ -7,6 +7,8 @@ public partial class Chunk : Node3D
 {
 	[Export] public Vector2I ChunkPosition = Vector2I.Zero;
 	public Voxel[][][] voxels;
+	public List<long> navPoints = new();
+	public List<(long, long)> navConnections = new();
 
 	private MeshInstance3D meshInstance;
 	private SurfaceTool surfaceTool;
@@ -75,9 +77,64 @@ public partial class Chunk : Node3D
 		return !((position.X >= CHUNK_SIZE.X) || (position.Y >= CHUNK_SIZE.Y) || (position.Z >= CHUNK_SIZE.X) || (position.X < 0) || (position.Y < 0) || (position.Z < 0));
 	}
 
-	public bool IsVoxelInChunk(Vector3I position)
+	public bool IsVoxelSolid(Vector3I position)
 	{	
 		return IsVoxelInBounds(position) && GetVoxel(position).id > 0;
+	}
+
+	private void RebuildNav()
+	{
+		for (byte x = 0; x < CHUNK_SIZE.X; x++)
+		{
+			for (byte z = 0; z < CHUNK_SIZE.X; z++)
+			{
+				for (byte y = 0; y < CHUNK_SIZE.Y; y++)
+				{
+					if (y + 1 >= CHUNK_SIZE.Y) continue; // TODO too high dont allow
+					if (y - 1 < 0) continue; // too low dont allow
+
+					if (voxels[x][y + 1][z].id > 0) continue; // voxel above is air
+					if (voxels[x][y][z].id > 0) continue; // this voxel is air
+					if (voxels[x][y - 1][z].id <= 0) continue; // voxel below is solid
+
+					navPoints.Add((long)DataPacking.PackData(x, y, z, (short)ChunkPosition.X, (short)ChunkPosition.Y));
+				}
+			}
+		}
+
+		GD.Print($"made nav points on {ChunkPosition}: {navPoints.Count}");
+
+		foreach (long pointId in navPoints)
+		{
+			DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+
+			Vector3I voxelOrigin = new(voxelX, voxelY, voxelZ);
+
+			for (int x = -1; x <= 1; x++)
+			{
+				for (int z = -1; z <= 1; z++)
+				{
+					for (int y = -1; y <= 1; y++)
+					{
+						if (x == 0 && y == 0 && z == 0) continue;
+						Vector3I dest = new(voxelOrigin.X + x, voxelOrigin.Y + y, voxelOrigin.Z + z);
+						if (new Vector3(dest.X, voxelOrigin.Y, dest.Z).DistanceTo(voxelOrigin) > 1f) continue; // not allowing diagonals. TODO: this is horrible
+						if (!IsVoxelInBounds(dest)) continue;
+						if ((dest.Y <= 0) || (dest.Y > CHUNK_SIZE.Y)) continue;
+
+						long destPacked = (long)DataPacking.PackData((byte)dest.X, (byte)dest.Y, (byte)dest.Z, (short)ChunkPosition.X, (short)ChunkPosition.Y);
+
+						if (navConnections.Contains((pointId, destPacked))) continue;
+
+						if (voxels[dest.X][dest.Y][dest.Z].id > 0) continue;
+						if (voxels[dest.X][dest.Y - 1][dest.Z].id <= 0) continue;
+						if (voxels[dest.X][dest.Y + 1][dest.Z].id > 0) continue;
+
+						navConnections.Add((pointId, destPacked));
+					}
+				}
+			}
+		}
 	}
 
 	private void RebuildVoxel(Voxel voxel, Vector3I voxelPosition)
@@ -85,19 +142,19 @@ public partial class Chunk : Node3D
 		Vector3I realPosition = new(voxelPosition.X + (ChunkPosition.X * CHUNK_SIZE.X), voxelPosition.Y, voxelPosition.Z + (ChunkPosition.Y * CHUNK_SIZE.X));
 		Vector2I textureAtlasOffset = IndexToVector(TEXTURE_LOOKUP[voxel.id]);
 
-		if (!IsVoxelInChunk(voxelPosition + FRONT.normal))
+		if (!IsVoxelSolid(voxelPosition + FRONT.normal))
 			RebuildSide(realPosition, FRONT, textureAtlasOffset, voxel.light);
-		if (!IsVoxelInChunk(voxelPosition + BACK.normal))
+		if (!IsVoxelSolid(voxelPosition + BACK.normal))
 			RebuildSide(realPosition, BACK, textureAtlasOffset, voxel.light);
 		
-		if (!IsVoxelInChunk(voxelPosition + RIGHT.normal))
+		if (!IsVoxelSolid(voxelPosition + RIGHT.normal))
 			RebuildSide(realPosition, RIGHT, textureAtlasOffset, voxel.light);
-		if (!IsVoxelInChunk(voxelPosition + LEFT.normal))
+		if (!IsVoxelSolid(voxelPosition + LEFT.normal))
 			RebuildSide(realPosition, LEFT, textureAtlasOffset, voxel.light);
 
-		if (!IsVoxelInChunk(voxelPosition + BOTTOM.normal))
+		if (!IsVoxelSolid(voxelPosition + BOTTOM.normal))
 			RebuildSide(realPosition, BOTTOM, textureAtlasOffset, voxel.light);
-		if (!IsVoxelInChunk(voxelPosition + TOP.normal))
+		if (!IsVoxelSolid(voxelPosition + TOP.normal))
 			RebuildSide(realPosition, TOP, textureAtlasOffset, voxel.light);
 	}
 
@@ -261,5 +318,7 @@ public partial class Chunk : Node3D
 
 		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionLayerValue(2, true);
 		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionMaskValue(2, true);
+
+		RebuildNav();
 	}
 }
