@@ -15,14 +15,9 @@ public static class Settings
     public static bool      ShowDebugDraw { get; set; } = true;
     public static bool      ShowEvenMoreDebugDraw { get; set; } = false;
 
-    private static string ExpandPath(string x)
-    {
-        return Godot.ProjectSettings.GlobalizePath(x);
-    }
-
     private static void NewSettingsFile(string path)
     {
-        using StreamWriter textReader = new(new FileStream(ExpandPath(SETTINGS_FILE_PATH), FileMode.Create, FileAccess.Write));
+        using StreamWriter textReader = new(new FileStream(path, FileMode.Create, FileAccess.Write));
 
         Dictionary<string, object> dictToWrite = new() { { "FileVersion", SETTINGS_VERSION } };
 
@@ -72,7 +67,7 @@ public static class Settings
 
     static Settings()
     {
-        string settingsPath = ExpandPath(SETTINGS_FILE_PATH);
+        string settingsPath = Godot.ProjectSettings.GlobalizePath(SETTINGS_FILE_PATH);
         if (!File.Exists(settingsPath))
             NewSettingsFile(settingsPath);
         
