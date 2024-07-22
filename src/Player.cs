@@ -38,7 +38,6 @@ public partial class Player : BasePlayer
 	public override void _Process(double delta)
 	{
 		HandleInput();
-		// HandleUpdateRenderDistance(Position);
 		WalkMove((float)delta);
 	
 		if (!Find.DebugUi.Enabled) return;

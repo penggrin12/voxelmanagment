@@ -15,8 +15,8 @@ public partial class World : Node3D
     [Export] bool onlyOneChunk = false;
     [Export] bool allowUpdatingRenderDistance = true;
 
-    private Queue<Vector2I> chunksToGenerate = new();
-    private Queue<Vector2I> chunksToRender = new();
+    private readonly Queue<Vector2I> chunksToGenerate = new();
+    private readonly Queue<Vector2I> chunksToRender = new();
     [Export] public FastNoiseLite baseNoise = new() { Seed = 356 };
     [Export] public FastNoiseLite[] additiveNoises = System.Array.Empty<FastNoiseLite>();
     [Export] public FastNoiseLite[] subtractiveNoises = System.Array.Empty<FastNoiseLite>();
