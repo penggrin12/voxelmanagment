@@ -9,8 +9,9 @@ namespace Game;
 public static class Settings
 {
     private const string    SETTINGS_FILE_PATH = "user://settings.json";
-    private const ushort    SETTINGS_VERSION = 3;
+    private const ushort    SETTINGS_VERSION = 4;
     public static ushort    RenderDistance { get; set; } = 4;
+    public static ushort    WorldSize { get; set; } = 12;
     public static bool      ShowDebugDraw { get; set; } = true;
     public static bool      ShowEvenMoreDebugDraw { get; set; } = false;
 

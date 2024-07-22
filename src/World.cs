@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Game;
 
@@ -13,8 +14,6 @@ public partial class World : Node3D
 
     [Export] bool onlyOneChunk = false;
     [Export] bool allowUpdatingRenderDistance = true;
-
-    [Signal] public delegate void UpdateRenderDistanceEventHandler(Vector2 from); // useless...?
 
     private Queue<Vector2I> chunksToGenerate = new();
     private Queue<Vector2I> chunksToRender = new();
@@ -82,18 +81,19 @@ public partial class World : Node3D
         chunksToRender.Enqueue(newChunk.ChunkPosition);
     }
 
-    private void HandleUpdateRenderDistance(Vector2 from)
+    private void HandleUpdateRenderDistanceAsync(Vector2 from)
     {
-        for (int x = Mathf.FloorToInt(from.X - Settings.RenderDistance); x < Mathf.CeilToInt(from.X + Settings.RenderDistance+1); x++)
+        for (int x = Mathf.FloorToInt(from.X - (Settings.WorldSize / 2)); x < Mathf.CeilToInt(from.X + (Settings.WorldSize / 2)+1); x++)
         {   
-            for (int y = Mathf.FloorToInt(from.Y - Settings.RenderDistance); y < Mathf.CeilToInt(from.Y + Settings.RenderDistance+1); y++)
+            for (int y = Mathf.FloorToInt(from.Y - (Settings.WorldSize / 2)); y < Mathf.CeilToInt(from.Y + (Settings.WorldSize / 2)+1); y++)
             {
+                // await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
                 Vector2I chunkPositionToMake = new(x, y);
-                if ((from.DistanceTo(new Vector2(x, y)) <= Settings.RenderDistance) && (!chunks.ContainsKey(chunkPositionToMake)))
-                {
-                    GD.Print($"gonna make {chunkPositionToMake}");
-                    MakeChunk(chunkPositionToMake);
-                }
+                // if ((from.DistanceTo(new Vector2(x, y)) <= Settings.RenderDistance) && (!chunks.ContainsKey(chunkPositionToMake)))
+                // {
+                GD.Print($"gonna make {chunkPositionToMake}");
+                MakeChunk(chunkPositionToMake);
+                // }
             }
         }
 
@@ -101,33 +101,14 @@ public partial class World : Node3D
         {
             chunks[chunkPosition].ChunkPosition = chunkPosition;
         }
-
-        // i believe something in derendering causes crashing when flying high speed
-
-        List<Vector2I> chunksPositions = chunks.Keys.ToList();
-        foreach (Vector2I chunkPosition in chunksPositions)
-        {
-            if (from.DistanceTo((Vector2)chunkPosition) >= Settings.RenderDistance * 1.5f)
-            {
-                GD.Print(chunkPosition);
-
-                // if (!chunks.ContainsKey(chunkPosition)) continue;
-
-                chunks[chunkPosition].DeRender();
-                chunks[chunkPosition].QueueFree();
-                chunks.Remove(chunkPosition);
-            }
-        } 
     }
 
 	public override void _Ready()
 	{
         if (onlyOneChunk)
             MakeChunk(Vector2I.Zero);
-        else if (!allowUpdatingRenderDistance)
-            HandleUpdateRenderDistance(Vector2.Zero);
-        else
-            UpdateRenderDistance += HandleUpdateRenderDistance;
+        else if (allowUpdatingRenderDistance)
+            HandleUpdateRenderDistanceAsync(Vector2.Zero);
 
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();

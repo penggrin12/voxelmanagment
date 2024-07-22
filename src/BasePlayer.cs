@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace Game;
@@ -10,13 +11,15 @@ public partial class BasePlayer : CharacterBody3D
 	private float renderChunksEverySeconds = 1f;
     public World world;
 
+	[Obsolete]
     public void HandleUpdateRenderDistance(Vector3 position)
 	{
-		double now = Time.GetUnixTimeFromSystem();
-		if (now - lastTimeRenderedChunks >= renderChunksEverySeconds)
-		{
-			world.EmitSignal(World.SignalName.UpdateRenderDistance, new Variant[] { new Vector2(position.X / 16f, position.Z / 16f) });
-			lastTimeRenderedChunks = now;
-		}
+		
+		// double now = Time.GetUnixTimeFromSystem();
+		// if (now - lastTimeRenderedChunks >= renderChunksEverySeconds)
+		// {
+		// 	world.EmitSignal(World.SignalName.UpdateRenderDistance, new Variant[] { new Vector2(position.X / 16f, position.Z / 16f) });
+		// 	lastTimeRenderedChunks = now;
+		// }
 	}
 }
