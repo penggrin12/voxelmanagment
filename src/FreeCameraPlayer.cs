@@ -37,7 +37,7 @@ public partial class FreeCameraPlayer : BasePlayer
 
 		if (!Chunk.IsVoxelInBounds(voxelPosition))
 		{
-            GD.Print("not in chunk");
+            // GD.Print("not in chunk");
             return;
         }
 

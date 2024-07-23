@@ -17,7 +17,7 @@ public partial class World : Node3D
 
     private readonly Queue<Vector2I> chunksToGenerate = new();
     private readonly Queue<Vector2I> chunksToRender = new();
-    [Export] public FastNoiseLite baseNoise = new() { Seed = 356 };
+    [Export] public FastNoiseLite baseNoise = new() { Seed = Random.Seed };
     [Export] public FastNoiseLite[] additiveNoises = System.Array.Empty<FastNoiseLite>();
     [Export] public FastNoiseLite[] subtractiveNoises = System.Array.Empty<FastNoiseLite>();
 
@@ -103,8 +103,17 @@ public partial class World : Node3D
         }
     }
 
-	public override void _Ready()
+	public override async void _Ready()
 	{
+        foreach (FastNoiseLite additiveNoise in additiveNoises)
+            additiveNoise.Seed = Random.Seed;
+
+        foreach (FastNoiseLite subtractiveNoise in subtractiveNoises)
+            subtractiveNoise.Seed = Random.Seed;
+
+        for (int i = 0; i < 5; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
         if (onlyOneChunk)
             MakeChunk(Vector2I.Zero);
         else if (allowUpdatingRenderDistance)

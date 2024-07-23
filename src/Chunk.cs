@@ -1,5 +1,7 @@
 using Godot;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Game;
 
@@ -16,7 +18,7 @@ public partial class Chunk : Node3D
     private static readonly byte[] TEXTURE_LOOKUP = new byte[]
 	{
 		0, // not actually rendered
-		37, 1, 2, 0, 3, 4, 7
+		37, 1, 2, 0, 3, 4, 7, 33, 34
 	};
 
     private static readonly List<Vector3I> VERTICES = new()
@@ -242,25 +244,25 @@ public partial class Chunk : Node3D
 				colHeight /= 4;
 				colHeight += CHUNK_SIZE.Y / 4;
 
-				VoxelID voxelID = VoxelID.VOID;
+				VoxelData.ID voxelID;
 
-				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelID.DIRT;
-				if (colHeight <= CHUNK_SIZE.Y / 2 + ((GD.Randf() - 0.5) * 1.5)) voxelID = VoxelID.GRASS;
-				else voxelID = VoxelID.STONE;
+				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelData.ID.DIRT;
+				if (colHeight <= CHUNK_SIZE.Y / 1.9 + (GD.Randf() * 1.5)) voxelID = VoxelData.ID.GRASS;
+				else voxelID = VoxelData.ID.STONE;
 
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
-					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.HARDSTONE); continue; }
+					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.HARDSTONE); continue; }
 					if (y > colHeight) continue;
 
-					if (voxelID == VoxelID.GRASS)
+					if (voxelID == VoxelData.ID.GRASS)
 					{
 						if (y == colHeight)
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.GRASS);
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.GRASS);
 						else if (y < colHeight && y >= colHeight - GD.RandRange(3, 5))
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.DIRT);
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.DIRT);
 						else
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelID.STONE);
+							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.STONE);
 					}
 					else
 					{
@@ -269,6 +271,126 @@ public partial class Chunk : Node3D
 				}
 			}
 		}
+
+		void MakeOreWorm(OresData.ID oreID)
+		{
+			OresData.Data oreData = OresData.data[oreID];
+			int oresToSpawn = oreData.weights.RandomElementByWeight(e => e.Value).Key;
+
+			// GD.Print($"gonna make {oresToSpawn} ores");
+			List<Vector3I> ores = new(oresToSpawn);
+
+			Vector3I metalAt = new(
+				Random.RandRange(0, CHUNK_SIZE.X),
+				Random.RandRange(oreData.YRange.X, oreData.YRange.Y),
+				Random.RandRange(0, CHUNK_SIZE.X)
+			);
+
+			Vector3I[] directions = { Vector3I.Back, Vector3I.Forward, Vector3I.Down, Vector3I.Up, Vector3I.Left, Vector3I.Right };
+
+			int tries = 0;
+			while (oresToSpawn > 0)
+			{
+				if (tries >= 10) { /*GD.PushWarning("failed 10 attempts on placing ore");*/ break; };
+
+				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
+				allowedToOverwrite.Add(VoxelData.ID.STONE);
+
+				if (
+					ores.Contains(metalAt) ||
+					!IsVoxelInBounds(metalAt) ||
+					!allowedToOverwrite.Contains((VoxelData.ID)voxels[metalAt.X][metalAt.Y][metalAt.Z].id)
+				)
+				{
+					tries++;
+					continue;
+				}
+				else
+				{
+					// GD.Print($"placing metal at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+					ores.Add(metalAt);
+					oresToSpawn--;
+				}
+
+				metalAt += directions[Random.RandRange(0, directions.Length - 1)];
+			}
+
+			foreach (Vector3I metalPosition in ores)
+				voxels[metalPosition.X][metalPosition.Y][metalPosition.Z] = new Voxel() { id = (byte)oreData.voxelID, light = 0 };
+		}
+
+		void MakeOreGrow(OresData.ID oreID)
+		{
+			OresData.Data oreData = OresData.data[oreID];
+			int oresToSpawn = oreData.weights.RandomElementByWeight(e => e.Value).Key;
+
+			// GD.Print($"gonna make {oresToSpawn} ores");
+			List<Vector3I> ores = new(oresToSpawn);
+
+			Vector3I metalAt = new(
+				Random.RandRange(0, CHUNK_SIZE.X),
+				Random.RandRange(oreData.YRange.X, oreData.YRange.Y),
+				Random.RandRange(0, CHUNK_SIZE.X)
+			);
+
+			Vector3I[] directions = {
+				Vector3I.Back, Vector3I.Forward, Vector3I.Back + Vector3I.Down, Vector3I.Back + Vector3I.Up, Vector3I.Forward + Vector3I.Down, Vector3I.Forward + Vector3I.Up,
+				Vector3I.Down, Vector3I.Up, Vector3I.Down + Vector3I.Left, Vector3I.Down + Vector3I.Right, Vector3I.Up + Vector3I.Left, Vector3I.Up + Vector3I.Right,
+				Vector3I.Left, Vector3I.Right,
+			};
+
+			int tries = 0;
+			while (oresToSpawn > 0)
+			{
+				if (tries >= 50) { /*GD.PushWarning("failed 50 attempts on placing ore");*/ break; };
+
+				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
+				allowedToOverwrite.Add(VoxelData.ID.STONE);
+
+				if (
+					ores.Contains(metalAt) ||
+					!IsVoxelInBounds(metalAt) ||
+					!allowedToOverwrite.Contains((VoxelData.ID)voxels[metalAt.X][metalAt.Y][metalAt.Z].id)
+				)
+				{
+					tries++;
+					continue;
+				}
+				else
+				{
+					// GD.Print($"placing metal at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+					ores.Add(metalAt);
+					oresToSpawn--;
+				}
+
+				metalAt = ores[Random.RandRange(ores.Count / 2, ores.Count - 1)] + directions[Random.RandRange(0, directions.Length - 1)];
+			}
+
+			foreach (Vector3I metalPosition in ores)
+				Call(MethodName.SetVoxel, metalPosition, (byte)oreData.voxelID);
+				// voxels[metalPosition.X][metalPosition.Y][metalPosition.Z] = new Voxel() { id = (byte)oreData.voxelID, light = 0 };
+		}
+
+		for (int i = 0; i < Random.RandRange(3, 5); i++)
+			MakeOreWorm(OresData.ID.METAL);
+		
+		for (int i = 0; i < Random.RandRange(5, 8); i++)
+			MakeOreGrow(OresData.ID.COAL);
+
+		/////// hollowing out stone at and below 27 for debug
+		// for (int x = 0; x < CHUNK_SIZE.X; x++)
+		// {
+		// 	for (int z = 0; z < CHUNK_SIZE.X; z++)
+		// 	{
+		// 		for (int y = 0; y <= 27; y++)
+		// 		{
+		// 			Voxel voxel = voxels[x][y][z];
+		// 			if (voxel.id != (byte)VoxelData.ID.STONE) continue;
+
+		// 			voxels[x][y][z] = new Voxel() { id = 0, light = 0 };
+		// 		}
+		// 	}
+		// }
 	}
 
 	private void FreeCollision()
