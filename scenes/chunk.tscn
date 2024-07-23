@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://cpgpda7t7oj2r"]
 
 [ext_resource type="Script" path="res://src/Chunk.cs" id="1_xdi3w"]
-[ext_resource type="Shader" path="res://assets/shaders/terain.gdshader" id="2_0b4to"]
+[ext_resource type="Shader" path="res://assets/shaders/terrain.gdshader" id="2_0b4to"]
 [ext_resource type="Texture2D" uid="uid://buauiywd5welb" path="res://assets/textures/terrain.png" id="3_5xq0x"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ynrrk"]
