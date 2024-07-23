@@ -15,12 +15,6 @@ public partial class Chunk : Node3D
 	private MeshInstance3D meshInstance;
 	private SurfaceTool surfaceTool;
 
-    private static readonly byte[] TEXTURE_LOOKUP = new byte[]
-	{
-		0, // not actually rendered
-		37, 1, 2, 0, 3, 4, 7, 33, 34
-	};
-
     private static readonly List<Vector3I> VERTICES = new()
 	{
 		new(0, 0, 0), // 0	   2 +--------+ 3  a+------+b
@@ -142,22 +136,22 @@ public partial class Chunk : Node3D
 	private void RebuildVoxel(Voxel voxel, Vector3I voxelPosition)
 	{
 		Vector3I realPosition = new(voxelPosition.X + (ChunkPosition.X * CHUNK_SIZE.X), voxelPosition.Y, voxelPosition.Z + (ChunkPosition.Y * CHUNK_SIZE.X));
-		Vector2I textureAtlasOffset = IndexToVector(TEXTURE_LOOKUP[voxel.id]);
+		VoxelData.Data voxelData = VoxelData.DATA[(VoxelData.ID)voxel.id];
 
 		if (!IsVoxelSolid(voxelPosition + FRONT.normal))
-			RebuildSide(realPosition, FRONT, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, FRONT, IndexToVector(voxelData.texture_lookup[0]), voxel.light);
 		if (!IsVoxelSolid(voxelPosition + BACK.normal))
-			RebuildSide(realPosition, BACK, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, BACK, IndexToVector(voxelData.texture_lookup[1]), voxel.light);
 		
 		if (!IsVoxelSolid(voxelPosition + RIGHT.normal))
-			RebuildSide(realPosition, RIGHT, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, RIGHT, IndexToVector(voxelData.texture_lookup[2]), voxel.light);
 		if (!IsVoxelSolid(voxelPosition + LEFT.normal))
-			RebuildSide(realPosition, LEFT, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, LEFT, IndexToVector(voxelData.texture_lookup[3]), voxel.light);
 
 		if (!IsVoxelSolid(voxelPosition + BOTTOM.normal))
-			RebuildSide(realPosition, BOTTOM, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, BOTTOM, IndexToVector(voxelData.texture_lookup[4]), voxel.light);
 		if (!IsVoxelSolid(voxelPosition + TOP.normal))
-			RebuildSide(realPosition, TOP, textureAtlasOffset, voxel.light);
+			RebuildSide(realPosition, TOP, IndexToVector(voxelData.texture_lookup[5]), voxel.light);
 	}
 
 	private void RebuildSide(Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
