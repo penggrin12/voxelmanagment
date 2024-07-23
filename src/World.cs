@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
+using Game.Interfaces;
 
 namespace Game;
 
@@ -10,9 +10,8 @@ public partial class World : Node3D
 {
     [Export] public PackedScene chunkScene;
     [Export] public PackedScene playerScene;
-    private Dictionary<Vector2I, Chunk> chunks = new();
+    private readonly Dictionary<Vector2I, Chunk> chunks = new();
 
-    [Export] bool onlyOneChunk = false;
     [Export] bool allowUpdatingRenderDistance = true;
 
     private readonly Queue<Vector2I> chunksToGenerate = new();
@@ -91,6 +90,9 @@ public partial class World : Node3D
                 Vector2I chunkPositionToMake = new(x, y);
                 // if ((from.DistanceTo(new Vector2(x, y)) <= Settings.RenderDistance) && (!chunks.ContainsKey(chunkPositionToMake)))
                 // {
+
+                if (HasChunk(chunkPositionToMake)) continue;
+
                 GD.Print($"gonna make {chunkPositionToMake}");
                 MakeChunk(chunkPositionToMake);
                 // }
@@ -114,23 +116,23 @@ public partial class World : Node3D
         for (int i = 0; i < 5; i++)
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
-        if (onlyOneChunk)
-            MakeChunk(Vector2I.Zero);
-        else if (allowUpdatingRenderDistance)
-            HandleUpdateRenderDistanceAsync(Vector2.Zero);
+        MakeChunk(Vector2I.Zero);
 
+        if (allowUpdatingRenderDistance)
+            HandleUpdateRenderDistanceAsync(Vector2.Zero);
+        
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();
 
-        BasePlayer player = playerScene.Instantiate<BasePlayer>();
-        player.world = this;
-        player.Position = new Vector3(
+        IPlayer player = playerScene.Instantiate<IPlayer>();
+        player.SetWorld(this);
+        player.AsNode3D().Position = new Vector3(
             Chunk.CHUNK_SIZE.X / 2,
             Chunk.CHUNK_SIZE.Y,
             Chunk.CHUNK_SIZE.X / 2
         );
 
-        AddChild(player);
+        AddChild(player.AsNode3D());
 	}
 
     public override void _Process(double delta)

@@ -1,9 +1,10 @@
+using Game.Interfaces;
 using Godot;
 using System;
 
 namespace Game;
 
-public partial class Player : BasePlayer
+public partial class Player : CharacterBody3D, IPlayer
 {
 	[ExportGroup("Links")]
 	[Export] private Node3D head;
@@ -28,6 +29,17 @@ public partial class Player : BasePlayer
 	private Vector3 moveInput = Vector3.Zero;
 	private float friction = 4f;
 	private bool wishJump = false;
+	private World world;
+
+	public void SetWorld(World world)
+	{
+		this.world = world;
+	}
+
+	public Node3D AsNode3D()
+    {
+        return this;
+    }
 
 	public override void _Ready()
 	{

@@ -80,6 +80,9 @@ public partial class Chunk : Node3D
 
 	private void RebuildNav()
 	{
+		navPoints.Clear();
+		navConnections.Clear();
+
 		for (byte x = 0; x < CHUNK_SIZE.X; x++)
 		{
 			for (byte z = 0; z < CHUNK_SIZE.X; z++)

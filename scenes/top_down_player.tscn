@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3 uid="uid://ctmxhsvkx8fvd"]
+
+[ext_resource type="Script" path="res://src/TopDownPlayer.cs" id="1_8n1hh"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_n7jd4"]
+
+[node name="TopDownPlayer" type="Node3D" node_paths=PackedStringArray("camera", "ray")]
+script = ExtResource("1_8n1hh")
+camera = NodePath("Camera")
+ray = NodePath("Ray")
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.566406, 0.824126, 0, -0.824126, 0.566406, 0, 0, 0)
+current = true
+
+[node name="Camera2" type="Camera3D" parent="Camera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.19209e-07, 16.6553)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Camera"]
+mesh = SubResource("SphereMesh_n7jd4")
+
+[node name="Ray" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.566406, 0.824126, 0, -0.824126, 0.566406, 0, 190.427, 130.877)
+target_position = Vector3(0, 0, -233.291)
+collision_mask = 3

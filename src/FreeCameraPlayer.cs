@@ -1,18 +1,27 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Godot;
-using Godot.Collections;
+using Game.Interfaces;
 
 namespace Game;
 
-public partial class FreeCameraPlayer : BasePlayer
+public partial class FreeCameraPlayer : CharacterBody3D, IPlayer
 {
     private Camera3D camera;
+    private World world;
 
     private Location agentStartLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(0, 45, 0) };
     private Location agentEndLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(3, 42, 0) };
+
+    public void SetWorld(World world)
+    {
+        this.world = world;
+    }
+
+    public Node3D AsNode3D()
+    {
+        return this;
+    }
 
     public override void _Ready()
     {
@@ -265,4 +274,4 @@ public partial class FreeCameraPlayer : BasePlayer
                 DebugDraw.Lines(linePositions.ToArray(), color: Colors.Black, duration: 5);
         }
     }
-}   
+}
