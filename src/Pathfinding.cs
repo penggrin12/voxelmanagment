@@ -154,6 +154,7 @@ public static class Pathfinder
         long point2 = (long)DataPacking.PackData((byte)b.voxelPosition.X, (byte)b.voxelPosition.Y, (byte)b.voxelPosition.Z, (short)b.chunkPosition.X, (short)b.chunkPosition.Y);
 
         if ((!aStar.HasPoint(point1)) || (!aStar.HasPoint(point2))) return (false, null);
+        // this always gives false for some reason
         // if (!aStar.ArePointsConnected(point1, point2)) return (false, null);
 
         long[] points = aStar.GetIdPath(point1, point2);
