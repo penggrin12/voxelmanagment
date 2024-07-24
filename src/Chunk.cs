@@ -196,7 +196,7 @@ public partial class Chunk : Node3D
 			RebuildSide(surfaceTool, realPosition, TOP, IndexToVector(voxelData.texture_lookup[5]), voxel.light);
 	}
 
-	private void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
+	private static void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
 	{
 		// a+------+b 
 		//  |      | b-c-a
