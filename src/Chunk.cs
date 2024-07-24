@@ -13,7 +13,9 @@ public partial class Chunk : Node3D
 	public List<(long, long)> navConnections = new();
 
 	private MeshInstance3D meshInstance;
-	private SurfaceTool surfaceTool;
+
+	[Export] Material regularMaterial;
+	[Export] Material transparentMaterial;
 
     private static readonly List<Vector3I> VERTICES = new()
 	{
@@ -48,7 +50,6 @@ public partial class Chunk : Node3D
 
 	public override void _Ready()
 	{
-		surfaceTool = new();
 		meshInstance = GetNode<MeshInstance3D>("Mesh");
 	}
 
@@ -75,7 +76,46 @@ public partial class Chunk : Node3D
 
 	public bool IsVoxelSolid(Vector3I position)
 	{	
-		return IsVoxelInBounds(position) && GetVoxel(position).id > 0;
+		if (!IsVoxelInBounds(position)) return false;
+
+		return !VoxelData.IsTransparent(GetVoxel(position).id);
+
+		// TODO: for some reason accesing dictionary for this is really slow, plz profile
+		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
+	}
+
+	public bool IsVoxelSolidForThisVoxel(Vector3I position, byte askerVoxelID)
+	{
+		// TODO: friking hell
+		// if (!IsVoxelInBounds(position))
+		// {
+		// 	if ((position.Y >= CHUNK_SIZE.Y) || (position.Y < 0)) return false;
+
+		// 	Vector2I tooHigh = new(
+		// 		Mathf.Clamp(position.X, -1, 1),
+		// 		Mathf.Clamp(position.Z, -1, 1)
+		// 	);
+
+		// 	Vector2I chunkPosition = new(
+		// 		ChunkPosition.X + tooHigh.X,
+		// 		ChunkPosition.Y + tooHigh.Y
+		// 	);
+
+		// 	if ((chunkPosition.X > 10) || (chunkPosition.Y > 10) || (chunkPosition.X < -10) || (chunkPosition.Y < -10))
+		// 		return true;
+
+		// 	// if (Find.World.HasChunk(chunkPosition)) return false;
+		// 	return false;
+		// 	// return Find.World.GetChunk(ChunkPosition).IsVoxelSolidForThisVoxel(new Vector3I(CHUNK_SIZE.X - position.X, position.Y, CHUNK_SIZE.X - position.Z), askerVoxelID);
+		// }
+
+		if (!IsVoxelInBounds(position)) return false;
+		
+		byte voxelID = GetVoxel(position).id;
+		return (!VoxelData.IsTransparent(voxelID)) || (askerVoxelID == voxelID);
+
+		// TODO: for some reason accesing dictionary for this is really slow, plz profile
+		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
 	}
 
 	private void RebuildNav()
@@ -101,7 +141,7 @@ public partial class Chunk : Node3D
 			}
 		}
 
-		GD.Print($"made nav points on {ChunkPosition}: {navPoints.Count}");
+		// GD.Print($"made nav points on {ChunkPosition}: {navPoints.Count}");
 
 		foreach (long pointId in navPoints)
 		{
@@ -136,28 +176,28 @@ public partial class Chunk : Node3D
 		}
 	}
 
-	private void RebuildVoxel(Voxel voxel, Vector3I voxelPosition)
+	private void RebuildVoxel(Voxel voxel, SurfaceTool surfaceTool, Vector3I voxelPosition)
 	{
 		Vector3I realPosition = new(voxelPosition.X + (ChunkPosition.X * CHUNK_SIZE.X), voxelPosition.Y, voxelPosition.Z + (ChunkPosition.Y * CHUNK_SIZE.X));
-		VoxelData.Data voxelData = VoxelData.DATA[(VoxelData.ID)voxel.id];
+		VoxelData.Data voxelData = VoxelData.DATA[voxel.id];
 
-		if (!IsVoxelSolid(voxelPosition + FRONT.normal))
-			RebuildSide(realPosition, FRONT, IndexToVector(voxelData.texture_lookup[0]), voxel.light);
-		if (!IsVoxelSolid(voxelPosition + BACK.normal))
-			RebuildSide(realPosition, BACK, IndexToVector(voxelData.texture_lookup[1]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + FRONT.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, FRONT, IndexToVector(voxelData.texture_lookup[0]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + BACK.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, BACK, IndexToVector(voxelData.texture_lookup[1]), voxel.light);
 		
-		if (!IsVoxelSolid(voxelPosition + RIGHT.normal))
-			RebuildSide(realPosition, RIGHT, IndexToVector(voxelData.texture_lookup[2]), voxel.light);
-		if (!IsVoxelSolid(voxelPosition + LEFT.normal))
-			RebuildSide(realPosition, LEFT, IndexToVector(voxelData.texture_lookup[3]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + RIGHT.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, RIGHT, IndexToVector(voxelData.texture_lookup[2]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + LEFT.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, LEFT, IndexToVector(voxelData.texture_lookup[3]), voxel.light);
 
-		if (!IsVoxelSolid(voxelPosition + BOTTOM.normal))
-			RebuildSide(realPosition, BOTTOM, IndexToVector(voxelData.texture_lookup[4]), voxel.light);
-		if (!IsVoxelSolid(voxelPosition + TOP.normal))
-			RebuildSide(realPosition, TOP, IndexToVector(voxelData.texture_lookup[5]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + BOTTOM.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, BOTTOM, IndexToVector(voxelData.texture_lookup[4]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + TOP.normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, TOP, IndexToVector(voxelData.texture_lookup[5]), voxel.light);
 	}
 
-	private void RebuildSide(Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
+	private void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
 	{
 		// a+------+b 
 		//  |      | b-c-a
@@ -238,26 +278,41 @@ public partial class Chunk : Node3D
 					colHeight = Mathf.Max(colHeight, colHeight + (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
 				}
 
+				foreach (FastNoiseLite subtractiveNoise in Find.World.subtractiveNoises)
+				{
+					FastNoiseLite thisNoise = subtractiveNoise;
+					thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
+					colHeight = Mathf.Min(colHeight, colHeight - (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y * 1.5)));
+				}
+
 				colHeight /= 4;
 				colHeight += CHUNK_SIZE.Y / 4;
+
+				// Find.DebugUi.Get<Label>("Test").Text = (CHUNK_SIZE.Y / 1.9).ToString();
 
 				VoxelData.ID voxelID;
 
 				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelData.ID.DIRT;
-				if (colHeight <= CHUNK_SIZE.Y / 1.9 + (GD.Randf() * 1.5)) voxelID = VoxelData.ID.GRASS;
+				// if (colHeight <= CHUNK_SIZE.Y / 4 + (GD.Randf() * 0.4)) voxelID = VoxelData.ID.WATER;
+				if (colHeight <= 19 + Random.Next(0, 1)) voxelID = VoxelData.ID.SAND;
+				else if (colHeight <= 33 + Random.Next(-1, 1)) voxelID = VoxelData.ID.GRASS;
 				else voxelID = VoxelData.ID.STONE;
 
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
 					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.HARDSTONE); continue; }
-					if (y > colHeight) continue;
+					if (y > colHeight)
+					{
+						if (y <= 18) SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.WATER);
+						continue;
+					}
 
-					if (voxelID == VoxelData.ID.GRASS)
+					if (new List<VoxelData.ID>() { VoxelData.ID.GRASS, VoxelData.ID.SAND }.Contains(voxelID))
 					{
 						if (y == colHeight)
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.GRASS);
-						else if (y < colHeight && y >= colHeight - GD.RandRange(3, 5))
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.DIRT);
+							SetVoxel(new Vector3I(x, y, z), (byte)voxelID);
+						else if (y < colHeight && y >= colHeight - Random.Next(3, 5))
+							SetVoxel(new Vector3I(x, y, z), voxelID == VoxelData.ID.SAND ? (byte)voxelID : (byte)VoxelData.ID.DIRT);
 						else
 							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.STONE);
 					}
@@ -402,12 +457,9 @@ public partial class Chunk : Node3D
 		meshInstance.Mesh = null;
 	}
 
-	public void Rebuild()
+	private SurfaceTool Populate(bool transparentPass)
 	{
-		DeRender();
-
-		ArrayMesh arrayMesh = new();	
-
+		SurfaceTool surfaceTool = new();
 		surfaceTool.Begin(Mesh.PrimitiveType.Triangles);
 		surfaceTool.SetSmoothGroup(uint.MaxValue); // means -1
 
@@ -421,8 +473,17 @@ public partial class Chunk : Node3D
 				{
 					Voxel voxel = voxels[x][y][z];
 
-					if (voxel.id > 0)
-						RebuildVoxel(voxel, new Vector3I(x, y, z));
+					if (voxel.id <= 0) continue;
+
+					bool isTransparent = VoxelData.IsTransparent(voxel.id);
+
+					if (isTransparent && !transparentPass) continue;
+					if (!isTransparent && transparentPass) continue;
+
+					RebuildVoxel(voxel, surfaceTool, new Vector3I(x, y, z));
+
+					// if ((voxel.id > 0) && (transparentPass ? voxelData.transparent : true))
+					// 	RebuildVoxel(voxel, surfaceTool, new Vector3I(x, y, z));
 				}
 			}
 		}
@@ -431,7 +492,30 @@ public partial class Chunk : Node3D
 
 		surfaceTool.GenerateNormals();
 		// do we need tangents...?
-		surfaceTool.Commit(arrayMesh);
+		return surfaceTool;
+	}
+
+	public void Rebuild()
+	{
+		DeRender();
+
+		ArrayMesh arrayMesh = new();
+
+		arrayMesh = Populate(false).Commit(arrayMesh);
+		arrayMesh = Populate(true).Commit(arrayMesh);
+
+        // ShaderMaterial regularMaterial = new() { Shader = GD.Load<Shader>("res://assets/shaders/terrain.gdshader") };
+        // regularMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
+
+		// ShaderMaterial transparentMaterial = new() { Shader = GD.Load<Shader>("res://assets/shaders/terrain.gdshader") };
+        // transparentMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
+		// transparentMaterial.SetShaderParameter("allowTransparency", true);
+
+		arrayMesh.SurfaceSetMaterial(0, regularMaterial);
+
+		if (arrayMesh.GetSurfaceCount() > 1)
+			arrayMesh.SurfaceSetMaterial(1, transparentMaterial);
+
 		meshInstance.Mesh = arrayMesh;
 		meshInstance.CreateTrimeshCollision();
 

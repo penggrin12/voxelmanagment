@@ -29,20 +29,22 @@ public partial class World : Node3D
     {
         while (true)
         {
-            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-
             if (chunksToGenerate.Count > 0)
             {
                 Chunk chunkToGenerate = chunks[chunksToGenerate.Dequeue()];
                 chunkToGenerate.FillBlank();
                 chunkToGenerate.Regenerate();
+
+                continue;
             }
 
             if (chunksToRender.Count > 0)
             {
                 Chunk chunkToRender = chunks[chunksToRender.Dequeue()];
-                chunkToRender.Rebuild();
+                chunkToRender.CallThreadSafe(Chunk.MethodName.Rebuild);
             }
+
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
     }
 

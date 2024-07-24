@@ -1,10 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://cpgpda7t7oj2r"]
+[gd_scene load_steps=7 format=3 uid="uid://cpgpda7t7oj2r"]
 
 [ext_resource type="Script" path="res://src/Chunk.cs" id="1_xdi3w"]
 [ext_resource type="Shader" path="res://assets/shaders/terrain.gdshader" id="2_0b4to"]
+[ext_resource type="Shader" path="res://assets/shaders/terrain_transparent.gdshader" id="2_ypv3g"]
 [ext_resource type="Texture2D" uid="uid://buauiywd5welb" path="res://assets/textures/terrain.png" id="3_5xq0x"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ynrrk"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uhdue"]
 render_priority = 0
 shader = ExtResource("2_0b4to")
 shader_parameter/CURVATURE = 1.995
@@ -12,8 +13,17 @@ shader_parameter/CURVATURE_ACTIVE = false
 shader_parameter/CURVATURE_DISTANCE = 20.17
 shader_parameter/tex = ExtResource("3_5xq0x")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_j2rxl"]
+render_priority = 0
+shader = ExtResource("2_ypv3g")
+shader_parameter/CURVATURE = 1.995
+shader_parameter/CURVATURE_ACTIVE = false
+shader_parameter/CURVATURE_DISTANCE = 20.17
+shader_parameter/tex = ExtResource("3_5xq0x")
+
 [node name="Chunk" type="Node3D"]
 script = ExtResource("1_xdi3w")
+regularMaterial = SubResource("ShaderMaterial_uhdue")
+transparentMaterial = SubResource("ShaderMaterial_j2rxl")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
-material_override = SubResource("ShaderMaterial_ynrrk")

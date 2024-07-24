@@ -25,6 +25,8 @@ void fragment() {
 	if (texx.a < 0.1) discard;
 	ALBEDO = texx.rgb * light;
 
+	ALPHA = texx.a;
+
 	//ALBEDO = vec3(UV, 0);
 
 	//ALBEDO = vec3(light);
