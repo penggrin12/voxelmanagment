@@ -17,7 +17,7 @@ public static class Pathfinder
             foreach (long point in chunk.navPoints)
             {
                 DataPacking.UnpackData((ulong)point, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
-                aStar.AddPoint(point, new Vector3(voxelX * (chunkX + 1), voxelY, voxelZ * (chunkY + 1)));
+                aStar.AddPoint(point, new Location() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) }.GetGlobalPosition());
             }
 
             foreach ((long point1, long point2) in chunk.navConnections)
@@ -146,7 +146,42 @@ public static class Pathfinder
         long point1 = (long)DataPacking.PackData((byte)a.voxelPosition.X, (byte)a.voxelPosition.Y, (byte)a.voxelPosition.Z, (short)a.chunkPosition.X, (short)a.chunkPosition.Y);
         long point2 = (long)DataPacking.PackData((byte)b.voxelPosition.X, (byte)b.voxelPosition.Y, (byte)b.voxelPosition.Z, (short)b.chunkPosition.X, (short)b.chunkPosition.Y);
 
-        if ((!aStar.HasPoint(point1)) || (!aStar.HasPoint(point2))) return (false, null);
+        // TODO: add some kind of option to disable fuzzy pathfind
+        float maxDist = 2.5f; // TODO: move this somewhere more appropriate
+
+        if (!aStar.HasPoint(point1))
+        {
+            long closest = aStar.GetClosestPoint(a.GetGlobalPosition());
+            DataPacking.UnpackData((ulong)closest, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+
+            Location newA = new() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) };
+            float distToActualPoint = newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition());
+
+            if (newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition()) > maxDist)
+                return (false, null);
+
+            GD.Print($"point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
+            if (Settings.ShowDebugDraw) DebugDraw.Point(newA.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Cyan, duration: 15);
+
+            return GetPath(newA, b);
+        }
+
+        if (!aStar.HasPoint(point2))
+        {
+            long closest = aStar.GetClosestPoint(b.GetGlobalPosition());
+            DataPacking.UnpackData((ulong)closest, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+
+            Location newB = new() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) };
+            float distToActualPoint = newB.GetGlobalPosition().DistanceTo(b.GetGlobalPosition());
+
+            if (distToActualPoint > maxDist) return (false, null);
+
+            GD.Print($"point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
+            if (Settings.ShowDebugDraw) DebugDraw.Point(newB.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Crimson, duration: 15);
+
+            return GetPath(a, newB);
+        }
+
         // this always gives false for some reason
         // if (!aStar.ArePointsConnected(point1, point2)) return (false, null);
 
