@@ -143,14 +143,6 @@ public static class Pathfinder
         AStar3D aStar = new();
         PopulateAStar(ref aStar);
 
-        //////// TODO: we need ref for recursion (?) but then we need to know how long `points` and `voxelPositions` gonna be where GetPath used
-        // Chunk fromChunk = thisWorld.GetChunk(from.chunkPosition);
-        // if ((from.voxelPosition.Y < Chunk.CHUNK_SIZE.Y) && (fromChunk.voxels[from.voxelPosition.X][from.voxelPosition.Y - 1][from.voxelPosition.Z].id <= 0))
-        //     return GetPath(new Location() { chunkPosition = from.chunkPosition, voxelPosition = new Vector3I(from.voxelPosition.X, from.voxelPosition.Y - 1, from.voxelPosition.Z) }, to, ref points, ref voxelPositions);
-        // Chunk toChunk = thisWorld.GetChunk(to.chunkPosition);
-        // if ((to.voxelPosition.Y < Chunk.CHUNK_SIZE.Y) && (toChunk.voxels[to.voxelPosition.X][to.voxelPosition.Y - 1][to.voxelPosition.Z].id <= 0))
-        //     return GetPath(from, new Location() { chunkPosition = to.chunkPosition, voxelPosition = new Vector3I(to.voxelPosition.X, to.voxelPosition.Y - 1, to.voxelPosition.Z) }, ref points, ref voxelPositions);
-
         long point1 = (long)DataPacking.PackData((byte)a.voxelPosition.X, (byte)a.voxelPosition.Y, (byte)a.voxelPosition.Z, (short)a.chunkPosition.X, (short)a.chunkPosition.Y);
         long point2 = (long)DataPacking.PackData((byte)b.voxelPosition.X, (byte)b.voxelPosition.Y, (byte)b.voxelPosition.Z, (short)b.chunkPosition.X, (short)b.chunkPosition.Y);
 
