@@ -1,6 +1,7 @@
 using Godot;
 using Game.Interfaces;
 using Game.Pathfinding;
+using Game.Structs;
 
 namespace Game;
 

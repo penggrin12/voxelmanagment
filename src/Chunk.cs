@@ -1,3 +1,4 @@
+using Game.Structs;
 using Godot;
 using System.Collections.Generic;
 using System.Linq;

@@ -74,15 +74,3 @@ public static class OresData
         { ID.COAL, new() { breakable = true, voxelID = VoxelData.ID.COAL_ORE, YRange = new(1, 27), weights = new() { {23, 0.50f}, {24, 0.45f}, {25, 0.30f}, {26, 0.15f}, {27, 0.05f} } } },
     };
 }
-
-public struct Voxel
-{
-    public byte id;
-    public byte light;
-}
-
-public struct Location
-{
-    public Vector2I chunkPosition;
-    public Vector3I voxelPosition;
-}

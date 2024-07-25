@@ -1,3 +1,4 @@
+using Game.Structs;
 using Godot;
 
 namespace Game.Interfaces;
