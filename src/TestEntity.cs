@@ -13,6 +13,7 @@ public partial class TestEntity : CharacterBody3D, IEntity, IPathfinding
     public override async void _Ready()
 	{
 		// rebuild nav for me each chunk update (this should maybe be shared...?)
+        // TODO: causes huuuuuugeee memory consumption, make it shared
 		Find.World.ChunkUpdated += async (Vector2I chunkPosition) => { await (this as IPathfinding).OnChunkUpdate(); };
 		await (this as IPathfinding).OnChunkUpdate();
 	}
