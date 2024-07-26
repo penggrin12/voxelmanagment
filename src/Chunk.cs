@@ -114,7 +114,6 @@ public partial class Chunk : Node3D
 		byte voxelID = GetVoxel(position).id;
 		return (!VoxelData.IsTransparent(voxelID)) || (askerVoxelID == voxelID);
 
-		// TODO: for some reason accesing dictionary for this is really slow, plz profile
 		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
 	}
 

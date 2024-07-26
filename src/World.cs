@@ -194,7 +194,7 @@ public partial class World : Node3D
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();
 
-        // TODO: after implementing proper player load it after WorldLoadingComplete
+        // TODO: after implementing proper player, load it after WorldLoadingComplete
         IPlayer player = playerScene.Instantiate<IPlayer>();
         player.AsNode3D().Position = new Vector3(
             Chunk.CHUNK_SIZE.X / 2,
