@@ -133,7 +133,7 @@ public partial class World : Node3D
     {
         // TODO: make it past this basic testing
 
-        int gonnaSpawnTestEntities = 128;
+        int gonnaSpawnTestEntities = 16;
         for (int i = 0; i < gonnaSpawnTestEntities; i++)
         {
             Location spawnAt = new() {
