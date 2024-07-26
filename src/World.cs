@@ -1,9 +1,11 @@
 using Godot;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Game.Interfaces;
 using Game.Structs;
+using Game.Pathfinding;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Game;
 
@@ -19,7 +21,7 @@ public partial class World : Node3D
     [Export] public Gradient islandGradient;
 
     private readonly Queue<Vector2I> chunksToGenerate = new();
-    private readonly Queue<Vector2I> chunksToRender = new();
+    private readonly ConcurrentQueue<Vector2I> chunksToRender = new();
     [Export] public FastNoiseLite baseNoise = new() { Seed = Random.Seed };
     [Export] public FastNoiseLite[] additiveNoises = System.Array.Empty<FastNoiseLite>();
     [Export] public FastNoiseLite[] subtractiveNoises = System.Array.Empty<FastNoiseLite>();
@@ -31,45 +33,43 @@ public partial class World : Node3D
 
     private readonly List<IEntity> entities = new();
 
+    public AStar3D AStar { get; set; }
+
     public World()
     {
         Find.World = this;
     }
 
-    private async void VoxelsThread()
+    private void VoxelsThread()
     {
         while (true)
         {
-            if (chunksToGenerate.Count > 0)
+            while (chunksToGenerate.Count > 0)
             {
                 Chunk chunkToGenerate = chunks[chunksToGenerate.Dequeue()];
                 chunkToGenerate.FillBlank();
                 chunkToGenerate.Regenerate();
-
-                continue;
             }
 
-            if (chunksToRender.Count > 0)
-            {
-                Chunk chunkToRender = chunks[chunksToRender.Dequeue()];
-                chunkToRender.CallThreadSafe(Chunk.MethodName.Rebuild);
-            }
-
-            if (chunksToGenerate.Count <= 0 && chunksToRender.Count <= 0 && !worldLoadedYet)
-            {
-                worldLoadedYet = true;
-                EmitSignal(SignalName.WorldLoadingComplete);
-            }
-
-            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            Parallel.For(0, chunksToRender.Count, parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 4 }, (i) => {
+                while (chunksToRender.TryDequeue(out Vector2I chunkPosition))
+                {
+                    chunks[chunkPosition].Rebuild();
+                }
+            });
         }
     }
 
     public void UpdateChunk(int x, int y) { UpdateChunk(new Vector2I(x, y)); }
-    public void UpdateChunk(Vector2I position)
+    public async void UpdateChunk(Vector2I position)
     {
         chunksToRender.Enqueue(position);
-        EmitSignal(SignalName.ChunkUpdated, position);
+
+        if (worldLoadedYet)
+        {
+            EmitSignal(SignalName.ChunkUpdated, position);
+            AStar = await Pathfinder.PopulateAStar();
+        }
     }
 
     public bool HasChunk(int x, int y) { return HasChunk(new Vector2I(x, y)); }
@@ -190,8 +190,9 @@ public partial class World : Node3D
 
         if (makeAllTheChunks)
             MakeWorldChunks();
-        
-        Thread voxelThread = new(VoxelsThread);
+
+        Task voxelThread = new(VoxelsThread);
+        voxelThread.ContinueWith((Task task) => { throw task.Exception.InnerException; }, TaskContinuationOptions.OnlyOnFaulted);
         voxelThread.Start();
 
         // TODO: after implementing proper player, load it after WorldLoadingComplete
@@ -206,7 +207,7 @@ public partial class World : Node3D
 
         AddEntity(player);
 
-        WorldLoadingComplete += () => GenerateEntities();
+        WorldLoadingComplete += async () => {AStar = await Pathfinder.PopulateAStar(); GenerateEntities();};
 	}
 
     public override void _Process(double delta)

@@ -15,6 +15,5 @@ public interface IPlayer : IEntity
 
 public interface IPathfinding
 {
-    public AStar3D AStar { get; set; }
-    public async Task OnChunkUpdate() { AStar = await Pathfinding.Pathfinder.PopulateAStar(); }
+
 }

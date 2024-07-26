@@ -499,9 +499,18 @@ public partial class Chunk : Node3D
 		return surfaceTool;
 	}
 
+	private void SetMesh(Mesh mesh)
+	{
+		meshInstance.Mesh = mesh;
+		meshInstance.CreateTrimeshCollision();
+
+		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionLayerValue(2, true);
+		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionMaskValue(2, true);
+	}
+
 	public void Rebuild()
 	{
-		DeRender();
+		CallThreadSafe(MethodName.DeRender);
 
 		ArrayMesh arrayMesh = new();
 
@@ -520,11 +529,7 @@ public partial class Chunk : Node3D
 		if (arrayMesh.GetSurfaceCount() > 1)
 			arrayMesh.SurfaceSetMaterial(1, transparentMaterial);
 
-		meshInstance.Mesh = arrayMesh;
-		meshInstance.CreateTrimeshCollision();
-
-		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionLayerValue(2, true);
-		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionMaskValue(2, true);
+		CallThreadSafe(MethodName.SetMesh, arrayMesh);
 
 		RebuildNav();
 	}

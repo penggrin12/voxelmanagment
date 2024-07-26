@@ -10,12 +10,11 @@ public static class Pathfinder
 {
     public static async Task<AStar3D> PopulateAStar()
     {
-        return await Task.Factory.StartNew(() => { return _PopulateAStar(); });
-    }
+        var task = new Task<AStar3D>(() => { return _PopulateAStar(); });
+        task.ContinueWith((task) => { throw task.Exception.InnerException; }, TaskContinuationOptions.OnlyOnFaulted);
+        task.Start();
 
-    public static async Task<(bool, Location[])> GetPath(AStar3D aStar, Location a, Location b)
-    {
-        return await Task.Factory.StartNew(() => { return _GetPath(aStar, a, b); });
+        return await task;
     }
 
     private static AStar3D _PopulateAStar()
@@ -149,7 +148,7 @@ public static class Pathfinder
         return aStar;
     }
 
-    private static (bool, Location[]) _GetPath(AStar3D aStar, Location a, Location b)
+    public static (bool, Location[]) GetPath(AStar3D aStar, Location a, Location b)
     {
         if ((!Chunk.IsVoxelInBounds(a.voxelPosition)) || (!Chunk.IsVoxelInBounds(b.voxelPosition))) return (false, null);
 
@@ -173,7 +172,7 @@ public static class Pathfinder
             GD.Print($"point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
             if (Settings.ShowDebugDraw) DebugDraw.Point(newA.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Cyan, duration: 15);
 
-            return _GetPath(aStar, newA, b);
+            return GetPath(aStar, newA, b);
         }
 
         if (!aStar.HasPoint(point2))
@@ -189,7 +188,7 @@ public static class Pathfinder
             GD.Print($"point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
             if (Settings.ShowDebugDraw) DebugDraw.Point(newB.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Crimson, duration: 15);
 
-            return _GetPath(aStar, a, newB);
+            return GetPath(aStar, a, newB);
         }
 
         // this always gives false for some reason

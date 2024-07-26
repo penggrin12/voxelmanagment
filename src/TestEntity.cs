@@ -8,17 +8,7 @@ namespace Game.Entities;
 
 public partial class TestEntity : CharacterBody3D, IEntity, IPathfinding
 {
-    public AStar3D AStar { get; set; } = new();
-
-    public override async void _Ready()
-	{
-		// rebuild nav for me each chunk update (this should maybe be shared...?)
-        // TODO: causes huuuuuugeee memory consumption, make it shared
-		Find.World.ChunkUpdated += async (Vector2I chunkPosition) => { await (this as IPathfinding).OnChunkUpdate(); };
-		await (this as IPathfinding).OnChunkUpdate();
-	}
-
-    public override async void _Process(double delta)
+    public override void _Process(double delta)
 	{
 		Location playerAt = (Location)Find.Player.GetDebugThingie();
 
@@ -34,7 +24,7 @@ public partial class TestEntity : CharacterBody3D, IEntity, IPathfinding
 
 		Vector3I voxelPosition = (Vector3I)(GlobalPosition - new Vector3(chunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
 
-		(bool, Location[]) path = await Pathfinder.GetPath(AStar, new Location() { chunkPosition = chunkPosition, voxelPosition = voxelPosition }, playerAt);
+		(bool, Location[]) path = Pathfinder.GetPath(Find.World.AStar, new Location() { chunkPosition = chunkPosition, voxelPosition = voxelPosition }, playerAt);
 
 		if (Settings.ShowDebugDraw)
         {
