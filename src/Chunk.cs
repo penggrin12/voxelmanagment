@@ -494,8 +494,9 @@ public partial class Chunk : Node3D
 
 		// BakeAO();
 
-		surfaceTool.GenerateNormals();
-		// do we need tangents...?
+		// TODO: do we need tangents and normals...?
+		// surfaceTool.GenerateNormals();
+		// surfaceTool.GenerateTangents();
 		return surfaceTool;
 	}
 
