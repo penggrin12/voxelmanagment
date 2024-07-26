@@ -104,7 +104,7 @@ public partial class Player : CharacterBody3D, IPlayer
 		{
 			Vector3I newVoxelPosition = voxelPosition + (Vector3I)collisionNormal;
 
-			// TODO: fuck math, me and my homies use:
+			// TODO: frick math, me and my homies use:
 			if (newVoxelPosition.X < 0) return;
 			if (newVoxelPosition.Z < 0) return;
 
