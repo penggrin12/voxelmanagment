@@ -1,26 +1,19 @@
 using Godot;
 using Game.Interfaces;
-using Game.Pathfinding;
 using Game.Structs;
 
-namespace Game;
+namespace Game.Entities;
 
 public partial class FreeCameraPlayer : CharacterBody3D, IPlayer
 {
     private Camera3D camera;
-    private World world;
 
     private Location agentStartLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(0, 45, 0) };
     private Location agentEndLocation = new() { chunkPosition = Vector2I.Zero, voxelPosition = new Vector3I(3, 42, 0) };
 
-    public void SetWorld(World world)
+    public object GetDebugThingie()
     {
-        this.world = world;
-    }
-
-    public Node3D AsNode3D()
-    {
-        return this;
+        return agentStartLocation;
     }
 
     public override void _Ready()
@@ -37,10 +30,10 @@ public partial class FreeCameraPlayer : CharacterBody3D, IPlayer
             Mathf.FloorToInt(camera.GlobalPosition.Z / Chunk.CHUNK_SIZE.X)
         );
 
-        if (!world.HasChunk(chunkPosition))
+        if (!Find.World.HasChunk(chunkPosition))
             return; // not in a chunk (loading void..?)
 
-		Chunk inChunk = world.GetChunk(chunkPosition);
+		Chunk inChunk = Find.World.GetChunk(chunkPosition);
 		Vector3 cameraAt = camera.GlobalPosition;
 		Vector3I voxelPosition = (Vector3I)(cameraAt - new Vector3(inChunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, inChunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
 
@@ -81,12 +74,12 @@ public partial class FreeCameraPlayer : CharacterBody3D, IPlayer
             );
         }
 
-        if (Input.IsActionJustPressed("debug_agent"))
-        {
-            (bool, Location[]) path = Pathfinder.GetPath(agentStartLocation, agentEndLocation);
-            if (!path.Item1) {GD.PushWarning("no path found"); return;}
+        // if (Input.IsActionJustPressed("debug_agent"))
+        // {
+        //     (bool, Location[]) path = Pathfinder.GetPath(agentStartLocation, agentEndLocation);
+        //     if (!path.Item1) {GD.PushWarning("no path found"); return;}
 
-            GD.Print($"path with {path.Item2.Length} steps found");
-        }
+        //     GD.Print($"path with {path.Item2.Length} steps found");
+        // }
     }
 }

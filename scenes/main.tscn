@@ -1,7 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://ujfc2nsqrqeq"]
+[gd_scene load_steps=5 format=3 uid="uid://ujfc2nsqrqeq"]
 
 [ext_resource type="PackedScene" uid="uid://0vkyrgwl7ip" path="res://scenes/world.tscn" id="1_0ycli"]
-[ext_resource type="PackedScene" uid="uid://dauj6u1r6vrht" path="res://scenes/free_camera_player.tscn" id="2_xfhbm"]
 
 [sub_resource type="Environment" id="Environment_hoff3"]
 background_energy_multiplier = 0.0
@@ -33,6 +32,5 @@ transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75
 shadow_enabled = true
 
 [node name="World" parent="." instance=ExtResource("1_0ycli")]
-playerScene = ExtResource("2_xfhbm")
 additiveNoises = [SubResource("FastNoiseLite_yev0i")]
 subtractiveNoises = [SubResource("FastNoiseLite_7ekcl")]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Game.Interfaces;
+using Game.Structs;
 
 namespace Game;
 
@@ -10,15 +11,23 @@ public partial class World : Node3D
 {
     [Export] public PackedScene chunkScene;
     [Export] public PackedScene playerScene;
+    [Export] public PackedScene testEntityScene;
     private readonly Dictionary<Vector2I, Chunk> chunks = new();
 
-    [Export] bool allowUpdatingRenderDistance = true;
+    [Export] bool makeAllTheChunks = true;
 
     private readonly Queue<Vector2I> chunksToGenerate = new();
     private readonly Queue<Vector2I> chunksToRender = new();
     [Export] public FastNoiseLite baseNoise = new() { Seed = Random.Seed };
     [Export] public FastNoiseLite[] additiveNoises = System.Array.Empty<FastNoiseLite>();
     [Export] public FastNoiseLite[] subtractiveNoises = System.Array.Empty<FastNoiseLite>();
+
+    [Signal] public delegate void WorldLoadingCompleteEventHandler();
+    private bool worldLoadedYet = false;
+
+    [Signal] public delegate void ChunkUpdatedEventHandler(Vector2I position);
+
+    private readonly List<IEntity> entities = new();
 
     public World()
     {
@@ -44,8 +53,21 @@ public partial class World : Node3D
                 chunkToRender.CallThreadSafe(Chunk.MethodName.Rebuild);
             }
 
+            if (chunksToGenerate.Count <= 0 && chunksToRender.Count <= 0 && !worldLoadedYet)
+            {
+                worldLoadedYet = true;
+                EmitSignal(SignalName.WorldLoadingComplete);
+            }
+
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         }
+    }
+
+    public void UpdateChunk(int x, int y) { UpdateChunk(new Vector2I(x, y)); }
+    public void UpdateChunk(Vector2I position)
+    {
+        chunksToRender.Enqueue(position);
+        EmitSignal(SignalName.ChunkUpdated, position);
     }
 
     public bool HasChunk(int x, int y) { return HasChunk(new Vector2I(x, y)); }
@@ -71,6 +93,7 @@ public partial class World : Node3D
         chunks[position] = newChunk;
     }
 
+    public void MakeChunk(int x, int y) { MakeChunk(new Vector2I(x, y)); }
     private void MakeChunk(Vector2I chunkPosition)
     {
         Chunk newChunk = chunkScene.Instantiate<Chunk>();
@@ -79,35 +102,81 @@ public partial class World : Node3D
         AddChild(newChunk);
         SetChunk(newChunk.ChunkPosition, newChunk);
         chunksToGenerate.Enqueue(newChunk.ChunkPosition);
-        chunksToRender.Enqueue(newChunk.ChunkPosition);
+        UpdateChunk(chunkPosition);
     }
 
-    private void HandleUpdateRenderDistanceAsync(Vector2 from)
+    private void MakeWorldChunks()
     {
-        for (int x = Mathf.FloorToInt(from.X - (Settings.WorldSize / 2)); x < Mathf.CeilToInt(from.X + (Settings.WorldSize / 2)+1); x++)
+        for (int x = Mathf.FloorToInt(-(Settings.WorldSize / 2)); x < Mathf.CeilToInt((Settings.WorldSize / 2) + 1); x++)
         {   
-            for (int y = Mathf.FloorToInt(from.Y - (Settings.WorldSize / 2)); y < Mathf.CeilToInt(from.Y + (Settings.WorldSize / 2)+1); y++)
+            for (int y = Mathf.FloorToInt(-(Settings.WorldSize / 2)); y < Mathf.CeilToInt((Settings.WorldSize / 2) + 1); y++)
             {
-                // await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
                 Vector2I chunkPositionToMake = new(x, y);
-                // if ((from.DistanceTo(new Vector2(x, y)) <= Settings.RenderDistance) && (!chunks.ContainsKey(chunkPositionToMake)))
-                // {
 
                 if (HasChunk(chunkPositionToMake)) continue;
 
                 GD.Print($"gonna make {chunkPositionToMake}");
                 MakeChunk(chunkPositionToMake);
-                // }
             }
-        }
-
-        foreach (Vector2I chunkPosition in chunks.Keys)
-        {
-            chunks[chunkPosition].ChunkPosition = chunkPosition;
         }
     }
 
-	public override async void _Ready()
+    public void AddEntity(IEntity entity)
+    {
+        entities.Add(entity);
+        GetNode<Node>("Entities").AddChild(entity.AsNode3D());
+    }
+
+    private void GenerateEntities()
+    {
+        // TODO: make it past this basic testing
+
+        int gonnaSpawnTestEntities = 128;
+        for (int i = 0; i < gonnaSpawnTestEntities; i++)
+        {
+            Location spawnAt = new() {
+                chunkPosition = new(
+                    Random.Next(-(Settings.WorldSize / 2), (Settings.WorldSize / 2) + 1),
+                    Random.Next(-(Settings.WorldSize / 2), (Settings.WorldSize / 2) + 1)
+                ),
+                voxelPosition = new(
+                    Random.Next(0, Chunk.CHUNK_SIZE.X - 1),
+                    Chunk.CHUNK_SIZE.Y - 1, // we gonna walk towards bottom
+                    Random.Next(0, Chunk.CHUNK_SIZE.X - 1)
+                )
+            };
+
+            Chunk chunk = GetChunk(spawnAt.chunkPosition);
+
+            int airs = 0;
+            while (spawnAt.voxelPosition.Y > 0)
+            {
+                Voxel voxel = chunk.GetVoxel(spawnAt.voxelPosition);
+                if (voxel.id <= 0)
+                    airs++;
+                else if (airs >= 2)
+                    break;
+                else
+                    airs = 0;
+
+                spawnAt.voxelPosition.Y--;
+            }
+
+            spawnAt.voxelPosition.Y++;
+
+            if (spawnAt.voxelPosition.Y <= 0)
+            {
+                GD.PushWarning($"couldnt find valid spot to spawn entity at {spawnAt}");
+                continue;
+            }
+
+            IEntity entity = testEntityScene.Instantiate<IEntity>();
+            entity.AsNode3D().Position = spawnAt.GetGlobalPosition() + new Vector3(0.5f, 0f, 0.5f);
+            AddEntity(entity);
+        }
+    }
+
+	public override void _Ready()
 	{
         foreach (FastNoiseLite additiveNoise in additiveNoises)
             additiveNoise.Seed = Random.Seed;
@@ -115,26 +184,27 @@ public partial class World : Node3D
         foreach (FastNoiseLite subtractiveNoise in subtractiveNoises)
             subtractiveNoise.Seed = Random.Seed;
 
-        for (int i = 0; i < 5; i++)
-            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-
         MakeChunk(Vector2I.Zero);
 
-        if (allowUpdatingRenderDistance)
-            HandleUpdateRenderDistanceAsync(Vector2.Zero);
+        if (makeAllTheChunks)
+            MakeWorldChunks();
         
         Thread voxelThread = new(VoxelsThread);
         voxelThread.Start();
 
+        // TODO: after implementing proper player load it after WorldLoadingComplete
         IPlayer player = playerScene.Instantiate<IPlayer>();
-        player.SetWorld(this);
         player.AsNode3D().Position = new Vector3(
             Chunk.CHUNK_SIZE.X / 2,
             Chunk.CHUNK_SIZE.Y,
             Chunk.CHUNK_SIZE.X / 2
         );
 
-        AddChild(player.AsNode3D());
+        Find.Player = player;
+
+        AddEntity(player);
+
+        WorldLoadingComplete += () => GenerateEntities();
 	}
 
     public override void _Process(double delta)

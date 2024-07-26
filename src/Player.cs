@@ -29,17 +29,6 @@ public partial class Player : CharacterBody3D, IPlayer
 	private Vector3 moveInput = Vector3.Zero;
 	private float friction = 4f;
 	private bool wishJump = false;
-	private World world;
-
-	public void SetWorld(World world)
-	{
-		this.world = world;
-	}
-
-	public Node3D AsNode3D()
-    {
-        return this;
-    }
 
 	public override void _Ready()
 	{
@@ -227,4 +216,9 @@ public partial class Player : CharacterBody3D, IPlayer
 		if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
 			CameraRotation(mouseMotion.Relative);
 	}
+
+    public object GetDebugThingie()
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,8 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://0vkyrgwl7ip"]
+[gd_scene load_steps=5 format=3 uid="uid://0vkyrgwl7ip"]
 
 [ext_resource type="PackedScene" uid="uid://cpgpda7t7oj2r" path="res://scenes/chunk.tscn" id="1_kkokg"]
 [ext_resource type="Script" path="res://src/World.cs" id="1_qwsdl"]
+[ext_resource type="PackedScene" uid="uid://dauj6u1r6vrht" path="res://scenes/free_camera_player.tscn" id="3_hf523"]
+[ext_resource type="PackedScene" uid="uid://dsej5vt6c7m4q" path="res://scenes/test_entity.tscn" id="4_0uixw"]
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_qwsdl")
 chunkScene = ExtResource("1_kkokg")
+playerScene = ExtResource("3_hf523")
+testEntityScene = ExtResource("4_0uixw")
+
+[node name="Entities" type="Node3D" parent="."]

@@ -2,13 +2,25 @@ using Game.Structs;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using System.Threading.Tasks;
 
 namespace Game.Pathfinding;
 
 public static class Pathfinder
 {
-    private static void PopulateAStar(ref AStar3D aStar)
+    public static async Task<AStar3D> PopulateAStar()
     {
+        return await Task.Factory.StartNew(() => { return _PopulateAStar(); });
+    }
+
+    public static async Task<(bool, Location[])> GetPath(AStar3D aStar, Location a, Location b)
+    {
+        return await Task.Factory.StartNew(() => { return _GetPath(aStar, a, b); });
+    }
+
+    private static AStar3D _PopulateAStar()
+    {
+        AStar3D aStar = new();
         List<(long, long)> connectionsMade = new();
 
         // adding points and connections of each chunk
@@ -120,7 +132,7 @@ public static class Pathfinder
         }
 
         // debug draw for each connection
-        if (!Settings.ShowDebugDraw) return;
+        if (!Settings.ShowDebugDraw) return aStar;
         foreach ((long, long) connection in connectionsMade)
         {
             DataPacking.UnpackData((ulong)connection.Item1, out byte voxel1X, out byte voxel1Y, out byte voxel1Z, out short chunk1X, out short chunk1Y);
@@ -133,15 +145,13 @@ public static class Pathfinder
                 duration: 15
             );
         }
+
+        return aStar;
     }
 
-    public static (bool, Location[]) GetPath(Location a, Location b)
+    private static (bool, Location[]) _GetPath(AStar3D aStar, Location a, Location b)
     {
         if ((!Chunk.IsVoxelInBounds(a.voxelPosition)) || (!Chunk.IsVoxelInBounds(b.voxelPosition))) return (false, null);
-
-        // TODO: we only really need to repopulate it when a chunk changes
-        AStar3D aStar = new();
-        PopulateAStar(ref aStar);
 
         long point1 = (long)DataPacking.PackData((byte)a.voxelPosition.X, (byte)a.voxelPosition.Y, (byte)a.voxelPosition.Z, (short)a.chunkPosition.X, (short)a.chunkPosition.Y);
         long point2 = (long)DataPacking.PackData((byte)b.voxelPosition.X, (byte)b.voxelPosition.Y, (byte)b.voxelPosition.Z, (short)b.chunkPosition.X, (short)b.chunkPosition.Y);
@@ -163,7 +173,7 @@ public static class Pathfinder
             GD.Print($"point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
             if (Settings.ShowDebugDraw) DebugDraw.Point(newA.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Cyan, duration: 15);
 
-            return GetPath(newA, b);
+            return _GetPath(aStar, newA, b);
         }
 
         if (!aStar.HasPoint(point2))
@@ -179,7 +189,7 @@ public static class Pathfinder
             GD.Print($"point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
             if (Settings.ShowDebugDraw) DebugDraw.Point(newB.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Crimson, duration: 15);
 
-            return GetPath(a, newB);
+            return _GetPath(aStar, a, newB);
         }
 
         // this always gives false for some reason
@@ -192,32 +202,6 @@ public static class Pathfinder
         {
             DataPacking.UnpackData((ulong)value, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
             locations[i] = new Location() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) };
-        }
-
-        if (Settings.ShowDebugDraw)
-        {
-            List<Vector3> linePositions = new(points.Length);
-            foreach (long point in points)
-            {
-                DataPacking.UnpackData((ulong)point, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
-    
-                Vector3 position = new(
-                    voxelX + chunkX * Chunk.CHUNK_SIZE.X + 0.5f,
-                    voxelY + 0.5f,
-                    voxelZ + chunkY * Chunk.CHUNK_SIZE.X + 0.5f
-                );
-                linePositions.Add(position);
-    
-                DebugDraw.Sphere(
-                    position,
-                    radius: 0.25f,
-                    color: Utils.GetRandomColor(),
-                    drawSolid: true,
-                    duration: 30
-                );
-            }
-
-            DebugDraw.Lines(linePositions.ToArray(), color: Colors.Black, duration: 5);
         }
 
         return (true, locations);
