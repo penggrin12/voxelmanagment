@@ -15,6 +15,8 @@ public partial class World : Node3D
     private readonly Dictionary<Vector2I, Chunk> chunks = new();
 
     [Export] bool makeAllTheChunks = true;
+    public bool islandMode = Settings.IslandMode; // should this be here..?
+    [Export] public Gradient islandGradient;
 
     private readonly Queue<Vector2I> chunksToGenerate = new();
     private readonly Queue<Vector2I> chunksToRender = new();

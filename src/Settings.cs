@@ -8,11 +8,11 @@ namespace Game;
 public static class Settings
 {
     private const string    SETTINGS_FILE_PATH = "user://settings.json";
-    private const ushort    SETTINGS_VERSION = 4;
-    public static ushort    RenderDistance { get; set; } = 4;
+    private const ushort    SETTINGS_VERSION = 5;
     public static ushort    WorldSize { get; set; } = 15;
     public static bool      ShowDebugDraw { get; set; } = true;
     public static bool      ShowEvenMoreDebugDraw { get; set; } = false;
+    public static bool      IslandMode { get; set; } = false;
 
     private static void NewSettingsFile(string path)
     {

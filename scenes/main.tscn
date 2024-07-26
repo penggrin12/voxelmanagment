@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://ujfc2nsqrqeq"]
+[gd_scene load_steps=6 format=3 uid="uid://ujfc2nsqrqeq"]
 
 [ext_resource type="PackedScene" uid="uid://0vkyrgwl7ip" path="res://scenes/world.tscn" id="1_0ycli"]
 
@@ -9,6 +9,10 @@ ambient_light_source = 1
 reflected_light_source = 1
 tonemap_mode = 2
 ssao_intensity = 3.0
+
+[sub_resource type="Gradient" id="Gradient_ia1hf"]
+interpolation_mode = 2
+offsets = PackedFloat32Array(0.347368, 0.5)
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_yev0i"]
 seed = 1
@@ -31,5 +35,6 @@ domain_warp_amplitude = 5.865
 environment = SubResource("Environment_hoff3")
 
 [node name="World" parent="." instance=ExtResource("1_0ycli")]
+islandGradient = SubResource("Gradient_ia1hf")
 additiveNoises = [SubResource("FastNoiseLite_yev0i")]
 subtractiveNoises = [SubResource("FastNoiseLite_7ekcl")]

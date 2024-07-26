@@ -289,6 +289,12 @@ public partial class Chunk : Node3D
 				colHeight /= 4;
 				colHeight += CHUNK_SIZE.Y / 4;
 
+				if (Find.World.islandMode)
+				{
+					Location at = new Location() {chunkPosition = ChunkPosition, voxelPosition = new Vector3I(x, 0, z)};
+					colHeight -= (int)(Find.World.islandGradient.Sample(at.GetGlobalPosition().DistanceTo(Vector3I.Zero) / (Settings.WorldSize * CHUNK_SIZE.X)).R * (CHUNK_SIZE.Y / 2));
+				}
+
 				// Find.DebugUi.Get<Label>("Test").Text = (CHUNK_SIZE.Y / 1.9).ToString();
 
 				VoxelData.ID voxelID;
@@ -302,6 +308,7 @@ public partial class Chunk : Node3D
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
 					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.HARDSTONE); continue; }
+					if (y == 1 && colHeight <= 0) { SetVoxel(new Vector3I(x, y, z), (byte)voxelID); continue; }
 					if (y > colHeight)
 					{
 						if (y <= 18) SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.WATER);
