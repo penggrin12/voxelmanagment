@@ -237,7 +237,7 @@ public partial class Chunk : Node3D
 	}
 
 	/// <summary>
-	/// Fills every voxel with 0s
+	/// Fills every voxel with void
 	/// </summary>
 	public void FillBlank()
 	{
@@ -250,7 +250,7 @@ public partial class Chunk : Node3D
 				voxels[x][y] = new Voxel[CHUNK_SIZE.X];
 				for (int z = 0; z < CHUNK_SIZE.X; z++)
 				{
-					SetVoxel(new Vector3I(x, y, z), 0);
+					SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.VOID);
 				}
 			}
 		}
