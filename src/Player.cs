@@ -4,6 +4,7 @@ using System;
 
 namespace Game;
 
+// TODO: will this even get used...?
 public partial class Player : CharacterBody3D, IPlayer
 {
 	[ExportGroup("Links")]
@@ -88,7 +89,7 @@ public partial class Player : CharacterBody3D, IPlayer
 		if (Input.IsActionJustPressed("break"))
 		{	
 			chunk.SetVoxel(voxelPosition, 0);
-			chunk.Rebuild();
+			Find.World.UpdateChunk(chunk.ChunkPosition);
 
 			Node3D breakDecoration = voxelBreakDecoration.Instantiate<Node3D>();
 			chunk.AddChild(breakDecoration);
@@ -113,7 +114,7 @@ public partial class Player : CharacterBody3D, IPlayer
 			//
 
 			chunk.SetVoxel(newVoxelPosition, 2);
-			chunk.Rebuild();
+			Find.World.UpdateChunk(chunk.ChunkPosition);
 		}
 	}
 
