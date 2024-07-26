@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://cidu3e31n6jpo"]
+[gd_scene load_steps=12 format=3 uid="uid://cidu3e31n6jpo"]
 
 [ext_resource type="Script" path="res://src/HideInEditor.cs" id="1_2vkn4"]
 [ext_resource type="Shader" path="res://assets/shaders/sky.gdshader" id="2_lmebt"]
+[ext_resource type="Shader" path="res://assets/shaders/clouds.gdshader" id="3_sgmma"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_igt3u"]
 render_priority = 0
@@ -10,8 +11,8 @@ shader = ExtResource("2_lmebt")
 [sub_resource type="SphereMesh" id="SphereMesh_dr14v"]
 material = SubResource("ShaderMaterial_igt3u")
 flip_faces = true
-radius = 800.0
-height = 1600.0
+radius = 4000.0
+height = 8000.0
 radial_segments = 16
 rings = 8
 
@@ -24,6 +25,29 @@ disable_fog = true
 material = SubResource("StandardMaterial3D_e0hav")
 size = Vector2(128, 128)
 
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_eo2i1"]
+frequency = 0.0249
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_s2pod"]
+noise = SubResource("FastNoiseLite_eo2i1")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ck52i"]
+render_priority = 0
+shader = ExtResource("3_sgmma")
+shader_parameter/timeScale1 = 0.001
+shader_parameter/timeScale2 = 0.001
+shader_parameter/cloud1worldScale = 2.23
+shader_parameter/cloud2worldScale = 2.845
+shader_parameter/displacementStrength = 9.635
+shader_parameter/discardHeight = 739.375
+shader_parameter/Noise1 = SubResource("NoiseTexture2D_s2pod")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_pq2x1"]
+material = SubResource("ShaderMaterial_ck52i")
+size = Vector2(8000, 8000)
+subdivide_width = 32
+subdivide_depth = 32
+
 [node name="Skysphere" type="Node3D"]
 visible = false
 script = ExtResource("1_2vkn4")
@@ -34,3 +58,8 @@ mesh = SubResource("SphereMesh_dr14v")
 [node name="Sun" type="MeshInstance3D" parent="."]
 transform = Transform3D(-0.993307, -0.0816775, -0.0816775, 0, 0.707107, -0.707107, 0.115509, -0.702374, -0.702374, 156.492, 573.931, 480.126)
 mesh = SubResource("QuadMesh_rld4j")
+
+[node name="Clouds" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 732, 0)
+top_level = true
+mesh = SubResource("PlaneMesh_pq2x1")
