@@ -132,6 +132,7 @@ public partial class Chunk : Node3D
 					if (y + 1 >= CHUNK_SIZE.Y) continue; // TODO too high dont allow
 					if (y - 1 < 0) continue; // too low dont allow
 
+					// use GetVoxel or nah?
 					if (voxels[x][y + 1][z].id > 0) continue; // voxel above is air
 					if (voxels[x][y][z].id > 0) continue; // this voxel is air
 					if (voxels[x][y - 1][z].id <= 0) continue; // voxel below is solid
@@ -165,9 +166,9 @@ public partial class Chunk : Node3D
 
 						if (navConnections.Contains((pointId, destPacked))) continue;
 
-						if (voxels[dest.X][dest.Y][dest.Z].id > 0) continue;
-						if (voxels[dest.X][dest.Y - 1][dest.Z].id <= 0) continue;
-						if (voxels[dest.X][dest.Y + 1][dest.Z].id > 0) continue;
+						if (GetVoxel(dest).id > 0) continue;
+						if (GetVoxel(dest + Vector3I.Down).id <= 0) continue;
+						if (GetVoxel(dest + Vector3I.Up).id > 0) continue;
 
 						navConnections.Add((pointId, destPacked));
 					}
@@ -351,7 +352,7 @@ public partial class Chunk : Node3D
 				if (
 					ores.Contains(metalAt) ||
 					!IsVoxelInBounds(metalAt) ||
-					!allowedToOverwrite.Contains((VoxelData.ID)voxels[metalAt.X][metalAt.Y][metalAt.Z].id)
+					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxel(metalAt).id)
 				)
 				{
 					tries++;
@@ -368,7 +369,7 @@ public partial class Chunk : Node3D
 			}
 
 			foreach (Vector3I metalPosition in ores)
-				voxels[metalPosition.X][metalPosition.Y][metalPosition.Z] = new Voxel() { id = (byte)oreData.voxelID, light = 0 };
+				SetVoxel(metalPosition, (byte)oreData.voxelID);
 		}
 
 		void MakeOreGrow(OresData.ID oreID)
@@ -402,7 +403,7 @@ public partial class Chunk : Node3D
 				if (
 					ores.Contains(metalAt) ||
 					!IsVoxelInBounds(metalAt) ||
-					!allowedToOverwrite.Contains((VoxelData.ID)voxels[metalAt.X][metalAt.Y][metalAt.Z].id)
+					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxel(metalAt).id)
 				)
 				{
 					tries++;
@@ -419,8 +420,7 @@ public partial class Chunk : Node3D
 			}
 
 			foreach (Vector3I metalPosition in ores)
-				Call(MethodName.SetVoxel, metalPosition, (byte)oreData.voxelID);
-				// voxels[metalPosition.X][metalPosition.Y][metalPosition.Z] = new Voxel() { id = (byte)oreData.voxelID, light = 0 };
+				SetVoxel(metalPosition, (byte)oreData.voxelID);
 		}
 
 		for (int i = 0; i < Random.RandRange(3, 5); i++)
@@ -471,7 +471,8 @@ public partial class Chunk : Node3D
 			{
 				for (int z = 0; z < CHUNK_SIZE.X; z++)
 				{
-					Voxel voxel = voxels[x][y][z];
+					Vector3I voxelPosition = new(x, y, z);
+					Voxel voxel = GetVoxel(voxelPosition);
 
 					if (voxel.id <= 0) continue;
 
@@ -480,10 +481,7 @@ public partial class Chunk : Node3D
 					if (isTransparent && !transparentPass) continue;
 					if (!isTransparent && transparentPass) continue;
 
-					RebuildVoxel(voxel, surfaceTool, new Vector3I(x, y, z));
-
-					// if ((voxel.id > 0) && (transparentPass ? voxelData.transparent : true))
-					// 	RebuildVoxel(voxel, surfaceTool, new Vector3I(x, y, z));
+					RebuildVoxel(voxel, surfaceTool, voxelPosition);
 				}
 			}
 		}
