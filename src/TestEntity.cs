@@ -14,17 +14,12 @@ public partial class TestEntity : CharacterBody3D, IEntity, IPathfinding
 
 		if (!Input.IsActionJustPressed("debug_agent")) return;
 
-		Vector2I chunkPosition = new(
-            Mathf.FloorToInt(GlobalPosition.X / Chunk.CHUNK_SIZE.X),
-            Mathf.FloorToInt(GlobalPosition.Z / Chunk.CHUNK_SIZE.X)
-        );
+		Location imAt = this.GetLocation();
 
-        if (!Find.World.HasChunk(chunkPosition))
+        if (!Find.World.HasChunk(imAt.chunkPosition))
             return;
 
-		Vector3I voxelPosition = (Vector3I)(GlobalPosition - new Vector3(chunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
-
-		(bool, Location[]) path = Pathfinder.GetPath(Find.World.AStar, new Location() { chunkPosition = chunkPosition, voxelPosition = voxelPosition }, playerAt);
+		(bool, Location[]) path = Pathfinder.GetPath(Find.World.AStar, imAt, playerAt);
 
 		if (Settings.ShowDebugDraw)
         {

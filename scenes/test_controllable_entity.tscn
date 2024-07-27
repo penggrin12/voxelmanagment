@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://bgclc5ng6anpn"]
+
+[ext_resource type="Script" path="res://src/TestControllableEntity.cs" id="1_pk57e"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5vkf2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ate6y"]
+shading_mode = 0
+albedo_color = Color(0.619608, 0, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_he26b"]
+material = SubResource("StandardMaterial3D_ate6y")
+
+[node name="TestControllableEntity" type="CharacterBody3D"]
+collision_layer = 5
+collision_mask = 5
+script = ExtResource("1_pk57e")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_5vkf2")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_he26b")

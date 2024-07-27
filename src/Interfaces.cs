@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Game.Structs;
 using Godot;
 
 namespace Game.Interfaces;
@@ -16,4 +17,14 @@ public interface IPlayer : IEntity
 public interface IPathfinding
 {
 
+}
+
+public interface IPlayerSelectableEntity : IEntity
+{
+    public void OnPlayerSelect() {}
+}
+
+public interface IPlayerControllableEntity : IPlayerSelectableEntity
+{
+    public void PlayerCommandMove(Location to);
 }
