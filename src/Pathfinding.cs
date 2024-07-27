@@ -11,7 +11,9 @@ public static class Pathfinder
     public static async Task<AStar3D> PopulateAStar()
     {
         var task = new Task<AStar3D>(() => { return _PopulateAStar(); });
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         task.ContinueWith((task) => { throw task.Exception.InnerException; }, TaskContinuationOptions.OnlyOnFaulted);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         task.Start();
 
         return await task;
