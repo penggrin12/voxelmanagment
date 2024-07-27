@@ -57,6 +57,12 @@ public partial class World : Node3D
                     chunks[chunkPosition].Rebuild();
                 }
             });
+
+            if (!worldLoadedYet)
+            {
+                CallThreadSafe(MethodName.EmitSignal, SignalName.WorldLoadingComplete);
+                worldLoadedYet = true;
+            }
         }
     }
 
