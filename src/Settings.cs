@@ -43,6 +43,8 @@ public static class Settings
                 {
                     Godot.GD.PushWarning($"mismatch settings versions with loaded file, rewriting file!");
                     NewSettingsFile(path);
+                    LoadSettingsFile(path);
+                    return;
                 }
 
                 continue;
