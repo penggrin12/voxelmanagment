@@ -39,7 +39,7 @@ public static class Settings
             {
                 Godot.GD.Print($"got settings versioned {setting.Value}");
 
-                if (((int)(long)setting.Value) != SETTINGS_VERSION)
+                if (((ushort)(long)setting.Value) != SETTINGS_VERSION)
                 {
                     Godot.GD.PushWarning($"mismatch settings versions with loaded file, rewriting file!");
                     NewSettingsFile(path);
