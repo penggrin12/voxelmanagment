@@ -78,7 +78,7 @@ public partial class Chunk : Node3D
 	{	
 		if (!IsVoxelInBounds(position)) return false;
 
-		return !VoxelData.IsTransparent(GetVoxel(position).id);
+		return GetVoxel(position).id > 0;
 
 		// TODO: for some reason accesing dictionary for this is really slow, plz profile
 		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
@@ -86,35 +86,28 @@ public partial class Chunk : Node3D
 
 	public bool IsVoxelSolidForThisVoxel(Vector3I position, byte askerVoxelID)
 	{
-		// TODO: friking hell
-		// if (!IsVoxelInBounds(position))
-		// {
-		// 	if ((position.Y >= CHUNK_SIZE.Y) || (position.Y < 0)) return false;
+		if (!IsVoxelInBounds(position))
+		{
+			if ((position.Y >= CHUNK_SIZE.Y) || (position.Y < 0)) return false;
 
-		// 	Vector2I tooHigh = new(
-		// 		Mathf.Clamp(position.X, -1, 1),
-		// 		Mathf.Clamp(position.Z, -1, 1)
-		// 	);
+			Location at = new() { chunkPosition = ChunkPosition, voxelPosition = position };
 
-		// 	Vector2I chunkPosition = new(
-		// 		ChunkPosition.X + tooHigh.X,
-		// 		ChunkPosition.Y + tooHigh.Y
-		// 	);
+			if (at.voxelPosition.X >= CHUNK_SIZE.X) {at.voxelPosition.X = 0; at.chunkPosition += Vector2I.Right;}
+			if (at.voxelPosition.Z >= CHUNK_SIZE.X) {at.voxelPosition.Z = 0; at.chunkPosition += Vector2I.Down;}
 
-		// 	if ((chunkPosition.X > 10) || (chunkPosition.Y > 10) || (chunkPosition.X < -10) || (chunkPosition.Y < -10))
-		// 		return true;
-
-		// 	// if (Find.World.HasChunk(chunkPosition)) return false;
-		// 	return false;
-		// 	// return Find.World.GetChunk(ChunkPosition).IsVoxelSolidForThisVoxel(new Vector3I(CHUNK_SIZE.X - position.X, position.Y, CHUNK_SIZE.X - position.Z), askerVoxelID);
-		// }
+			if (at.voxelPosition.X < 0) {at.voxelPosition.X = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Left;};
+			if (at.voxelPosition.Z < 0) {at.voxelPosition.Z = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Up;};
+			
+			if (!Find.World.HasChunk(at.chunkPosition))
+				return false;
+			
+			return Find.World.GetChunk(at.chunkPosition).IsVoxelSolidForThisVoxel(at.voxelPosition, askerVoxelID);
+		}
 
 		if (!IsVoxelInBounds(position)) return false;
 		
 		byte voxelID = GetVoxel(position).id;
 		return (!VoxelData.IsTransparent(voxelID)) || (askerVoxelID == voxelID);
-
-		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
 	}
 
 	private void RebuildNav()
