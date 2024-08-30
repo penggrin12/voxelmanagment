@@ -24,30 +24,22 @@ public static class VoxelData
     {
         public byte strongness;
         public byte[] texture_lookup; // front, back,    right, left,    bottom, top
+        public bool translucent;
+        public bool solid;
     }
 
-    public static bool IsTransparent(byte voxelID)
-    {
-        return voxelID switch
-        {
-            (byte)ID.VOID => true,
-            (byte)ID.WATER => true,
-            _ => false,
-        };
-    }
-
-    public static readonly Dictionary<byte, Data> DATA = new() {
-        { (byte)ID.VOID,          new() { strongness = 0  , texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   } } },
-        { (byte)ID.HARDSTONE,     new() { strongness = 255, texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   } } },
-        { (byte)ID.STONE,         new() { strongness = 30 , texture_lookup = new byte[6] { 1  , 1  , 1  , 1  , 1  , 1   } } },
-        { (byte)ID.DIRT,          new() { strongness = 5  , texture_lookup = new byte[6] { 2  , 2  , 2  , 2  , 2  , 2   } } },
-        { (byte)ID.GRASS,         new() { strongness = 4  , texture_lookup = new byte[6] { 4  , 4  , 4  , 4  , 2  , 3   } } },
-        { (byte)ID.PLANKS,        new() { strongness = 20 , texture_lookup = new byte[6] { 5  , 5  , 5  , 5  , 5  , 5   } } },
-        { (byte)ID.BRICKS,        new() { strongness = 40 , texture_lookup = new byte[6] { 6  , 6  , 6  , 6  , 6  , 6   } } },
-        { (byte)ID.METAL_ORE,     new() { strongness = 100, texture_lookup = new byte[6] { 7  , 7  , 7  , 7  , 7  , 7   } } },
-        { (byte)ID.COAL_ORE,      new() { strongness = 70 , texture_lookup = new byte[6] { 8  , 8  , 8  , 8  , 8  , 8   } } },
-        { (byte)ID.SAND,          new() { strongness = 70 , texture_lookup = new byte[6] { 9  , 9  , 9  , 9  , 9  , 9   } } },
-        { (byte)ID.WATER,         new() { strongness = 70 , texture_lookup = new byte[6] { 10 , 10 , 10 , 10 , 10 , 10  } } },
+    public static readonly Data[] DATA = {
+        new() { strongness = 0  , texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   }, translucent = true , solid = false },
+        new() { strongness = 255, texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   }, translucent = false, solid = true  },
+        new() { strongness = 30 , texture_lookup = new byte[6] { 1  , 1  , 1  , 1  , 1  , 1   }, translucent = false, solid = true  },
+        new() { strongness = 5  , texture_lookup = new byte[6] { 2  , 2  , 2  , 2  , 2  , 2   }, translucent = false, solid = true  },
+        new() { strongness = 4  , texture_lookup = new byte[6] { 4  , 4  , 4  , 4  , 2  , 3   }, translucent = false, solid = true  },
+        new() { strongness = 20 , texture_lookup = new byte[6] { 5  , 5  , 5  , 5  , 5  , 5   }, translucent = false, solid = true  },
+        new() { strongness = 40 , texture_lookup = new byte[6] { 6  , 6  , 6  , 6  , 6  , 6   }, translucent = false, solid = true  },
+        new() { strongness = 100, texture_lookup = new byte[6] { 7  , 7  , 7  , 7  , 7  , 7   }, translucent = false, solid = true  },
+        new() { strongness = 70 , texture_lookup = new byte[6] { 8  , 8  , 8  , 8  , 8  , 8   }, translucent = false, solid = true  },
+        new() { strongness = 70 , texture_lookup = new byte[6] { 9  , 9  , 9  , 9  , 9  , 9   }, translucent = false, solid = true  },
+        new() { strongness = 70 , texture_lookup = new byte[6] { 10 , 10 , 10 , 10 , 10 , 10  }, translucent = true , solid = false  },
     };
 }
 

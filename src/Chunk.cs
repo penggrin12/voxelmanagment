@@ -74,14 +74,25 @@ public partial class Chunk : Node3D
 		return !((position.X >= CHUNK_SIZE.X) || (position.Y >= CHUNK_SIZE.Y) || (position.Z >= CHUNK_SIZE.X) || (position.X < 0) || (position.Y < 0) || (position.Z < 0));
 	}
 
-	public bool IsVoxelSolid(Vector3I position)
+	public bool IsVoxelTranslucent(Vector3I position)
 	{	
 		if (!IsVoxelInBounds(position)) return false;
+		return IsVoxelTranslucent(GetVoxel(position).id);
+	}
 
-		return GetVoxel(position).id > 0;
+	public static bool IsVoxelTranslucent(byte voxelID)
+	{
+		return voxelID <= 0 || VoxelData.DATA[voxelID].translucent;
+	}
 
-		// TODO: for some reason accesing dictionary for this is really slow, plz profile
-		// return voxel.id > 0 && VoxelData.DATA[voxel.id].transparent;
+	public bool IsVoxelSolid(Vector3I position)
+	{
+		if (!IsVoxelInBounds(position)) return false;
+		return IsVoxelSolid(GetVoxel(position).id);
+	}
+	public static bool IsVoxelSolid(byte voxelID)
+	{
+		return voxelID > 0 && VoxelData.DATA[voxelID].solid;
 	}
 
 	public bool IsVoxelSolidForThisVoxel(Vector3I position, byte askerVoxelID)
@@ -107,7 +118,7 @@ public partial class Chunk : Node3D
 		if (!IsVoxelInBounds(position)) return false;
 		
 		byte voxelID = GetVoxel(position).id;
-		return (!VoxelData.IsTransparent(voxelID)) || (askerVoxelID == voxelID);
+		return VoxelData.DATA[voxelID].solid || (askerVoxelID == voxelID);
 	}
 
 	private void RebuildNav()
@@ -475,7 +486,7 @@ public partial class Chunk : Node3D
 
 					if (voxel.id <= 0) continue;
 
-					bool isTransparent = VoxelData.IsTransparent(voxel.id);
+					bool isTransparent = VoxelData.DATA[voxel.id].translucent;
 
 					if (isTransparent && !transparentPass) continue;
 					if (!isTransparent && transparentPass) continue;
