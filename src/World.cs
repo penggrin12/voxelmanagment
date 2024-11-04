@@ -137,6 +137,18 @@ public partial class World : Node3D
         UpdateChunk(chunkPosition);
     }
 
+    public Voxel GetVoxel(Vector3I position) { return GetVoxel(Location.FromGlobalPosition(position)); }
+    public Voxel GetVoxel(Location location)
+    {
+        return GetChunk(location.chunkPosition).GetVoxel(location.voxelPosition);
+    }
+
+    public void SetVoxel(Vector3I position, byte id) { SetVoxel(Location.FromGlobalPosition(position), id); }
+    public void SetVoxel(Location location, byte id)
+    {
+        GetChunk(location.chunkPosition).SetVoxel(location.voxelPosition, id);
+    }
+
     private void MakeWorldChunks()
     {
         for (int x = Mathf.FloorToInt(-(Settings.WorldSize / 2)); x < Mathf.CeilToInt((Settings.WorldSize / 2) + 1); x++)
