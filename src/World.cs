@@ -6,6 +6,7 @@ using Game.Structs;
 using Game.Pathfinding;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Game;
 
@@ -44,19 +45,42 @@ public partial class World : Node3D
     {
         while (true)
         {
+            Stopwatch stopwatch = new();
+
             while (chunksToGenerate.Count > 0)
             {
+                stopwatch.Reset();
+                stopwatch.Start();
                 Chunk chunkToGenerate = chunks[chunksToGenerate.Dequeue()];
                 chunkToGenerate.FillBlank();
                 chunkToGenerate.Regenerate();
+
+                stopwatch.Stop();
+                GD.Print($"took time to generate [{chunkToGenerate.ChunkPosition}]: {stopwatch.Elapsed.Milliseconds} ms.");
             }
+
+            if (chunksToRender.Count <= 0) continue;
+
+            stopwatch.Start();
+
+            int m = 0;
 
             Parallel.For(0, chunksToRender.Count, parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 4 }, (i) => {
                 while (chunksToRender.TryDequeue(out Vector2I chunkPosition))
                 {
+                    Stopwatch inner_stopwatch = new();
+                    inner_stopwatch.Start();
+
                     chunks[chunkPosition].Rebuild();
+
+                    inner_stopwatch.Stop();
+                    GD.Print($"took time to rebuild [{chunkPosition}]: {inner_stopwatch.Elapsed.Milliseconds} ms.");
+                    m += inner_stopwatch.Elapsed.Milliseconds;
                 }
             });
+
+            stopwatch.Stop();
+            GD.Print($"took time to rebuild {chunksToRender.Count} chunks: {m} ms.");
 
             if (!worldLoadedYet)
             {
