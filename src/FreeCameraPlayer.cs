@@ -45,7 +45,7 @@ public partial class FreeCameraPlayer : Node3D, IPlayer
                 Chunk chunk = collidingWithParent as Chunk;
                 Vector3 collisionNormal = ray.GetCollisionNormal();
                 Vector3 collisionAt = ray.GetCollisionPoint();
-                Vector3I voxelPosition = (Vector3I)(collisionAt - collisionNormal * 0.05f - new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
+                Vector3I voxelPosition = (Vector3I)(collisionAt - (collisionNormal * 0.05f) - new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
 
                 (selectedEntity as IPlayerControllableEntity).PlayerCommandMove(new Location() { chunkPosition = chunk.ChunkPosition, voxelPosition = voxelPosition });
             }

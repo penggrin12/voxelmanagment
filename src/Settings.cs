@@ -25,15 +25,13 @@ public static class Settings
             dictToWrite.Add(property.Name, property.GetValue(null));
         }
 
-        textReader.Write(JsonConvert.SerializeObject(dictToWrite, Formatting.Indented, new JsonSerializerSettings() {  }));
+        textReader.Write(JsonConvert.SerializeObject(dictToWrite, Formatting.Indented, new JsonSerializerSettings()));
     }
 
     private static void LoadSettingsFile(string path)
     {
         using StreamReader textReader = new(new FileStream(path, FileMode.Open, FileAccess.Read));
-        Dictionary<string, object> settings = JsonConvert.DeserializeObject<Dictionary<string, object>>(textReader.ReadToEnd());
-
-        foreach (KeyValuePair<string, object> setting in settings)
+        foreach (KeyValuePair<string, object> setting in JsonConvert.DeserializeObject<Dictionary<string, object>>(textReader.ReadToEnd()))
         {
             if (setting.Key == "FileVersion")
             {
@@ -41,7 +39,7 @@ public static class Settings
 
                 if (((ushort)(long)setting.Value) != SETTINGS_VERSION)
                 {
-                    Godot.GD.PushWarning($"mismatch settings versions with loaded file, rewriting file!");
+                    Godot.GD.PushWarning("mismatch settings versions with loaded file, rewriting file!");
                     NewSettingsFile(path);
                     LoadSettingsFile(path);
                     return;
@@ -71,7 +69,7 @@ public static class Settings
         string settingsPath = Godot.ProjectSettings.GlobalizePath(SETTINGS_FILE_PATH);
         if (!File.Exists(settingsPath))
             NewSettingsFile(settingsPath);
-        
+
         LoadSettingsFile(settingsPath);
     }
-}   
+}

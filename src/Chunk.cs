@@ -9,17 +9,17 @@ public partial class Chunk : Node3D
 {
 	[Export] public Vector2I ChunkPosition = Vector2I.Zero;
 	public Voxel[][][] voxels;
-	public List<long> navPoints = new();
-	public List<(long, long)> navConnections = new();
+	public List<long> navPoints = [];
+	public List<(long, long)> navConnections = [];
 
 	private MeshInstance3D meshInstance;
 
 	[Export] Material regularMaterial;
 	[Export] Material transparentMaterial;
 
-    private static readonly List<Vector3I> VERTICES = new()
-	{
-		new(0, 0, 0), // 0	   2 +--------+ 3  a+------+b
+    private static readonly List<Vector3I> VERTICES =
+    [
+        new(0, 0, 0), // 0	   2 +--------+ 3  a+------+b
 		new(1, 0, 0), // 1	    /|       /|     |      |
 		new(0, 1, 0), // 2	   / |      / |     |      |
 		new(1, 1, 0), // 3	6 +--------+ 7|    c+------+d
@@ -27,7 +27,7 @@ public partial class Chunk : Node3D
 		new(1, 0, 1), // 5	  | /      | /     b-a-c
 		new(0, 1, 1), // 6	  |/       |/      b-c-d
 		new(1, 1, 1)  // 7	4 +--------+ 5
-	};
+	];
 
 	private struct Side
 	{
@@ -55,7 +55,6 @@ public partial class Chunk : Node3D
 
 	public static Vector2I IndexToVector(byte index)
 	{
-		
 		return new Vector2I((byte)(index % TEXTURE_ATLAS_SIZE.X), (byte)(index / TEXTURE_ATLAS_SIZE.Y));
 	}
 
@@ -75,7 +74,7 @@ public partial class Chunk : Node3D
 	}
 
 	public bool IsVoxelTranslucent(Vector3I position)
-	{	
+	{
 		if (!IsVoxelInBounds(position)) return false;
 		return IsVoxelTranslucent(GetVoxel(position).id);
 	}
@@ -106,17 +105,17 @@ public partial class Chunk : Node3D
 			if (at.voxelPosition.X >= CHUNK_SIZE.X) {at.voxelPosition.X = 0; at.chunkPosition += Vector2I.Right;}
 			if (at.voxelPosition.Z >= CHUNK_SIZE.X) {at.voxelPosition.Z = 0; at.chunkPosition += Vector2I.Down;}
 
-			if (at.voxelPosition.X < 0) {at.voxelPosition.X = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Left;};
-			if (at.voxelPosition.Z < 0) {at.voxelPosition.Z = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Up;};
-			
+			if (at.voxelPosition.X < 0) {at.voxelPosition.X = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Left;}
+			if (at.voxelPosition.Z < 0) {at.voxelPosition.Z = CHUNK_SIZE.X - 1; at.chunkPosition += Vector2I.Up;}
+
 			if (!Find.World.HasChunk(at.chunkPosition))
 				return false;
-			
+
 			return Find.World.GetChunk(at.chunkPosition).IsVoxelSolidForThisVoxel(at.voxelPosition, askerVoxelID);
 		}
 
 		if (!IsVoxelInBounds(position)) return false;
-		
+
 		byte voxelID = GetVoxel(position).id;
 		return VoxelData.DATA[voxelID].solid || (askerVoxelID == voxelID);
 	}
@@ -132,8 +131,8 @@ public partial class Chunk : Node3D
 			{
 				for (byte y = 0; y < CHUNK_SIZE.Y; y++)
 				{
-					if (y + 1 >= CHUNK_SIZE.Y) continue; // TODO too high dont allow
-					if (y - 1 < 0) continue; // too low dont allow
+					if (y + 1 >= CHUNK_SIZE.Y) continue; // TODO too high don't allow
+					if (y < 1) continue; // too low don't allow
 
 					// use GetVoxel or nah?
 					if (voxels[x][y + 1][z].id > 0) continue; // voxel above is air
@@ -149,7 +148,7 @@ public partial class Chunk : Node3D
 
 		foreach (long pointId in navPoints)
 		{
-			DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out short chunkX, out short chunkY);
+            DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out _, out _);
 
 			Vector3I voxelOrigin = new(voxelX, voxelY, voxelZ);
 
@@ -189,7 +188,7 @@ public partial class Chunk : Node3D
 			RebuildSide(surfaceTool, realPosition, FRONT, IndexToVector(voxelData.texture_lookup[0]), voxel.light);
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + BACK.normal, voxel.id))
 			RebuildSide(surfaceTool, realPosition, BACK, IndexToVector(voxelData.texture_lookup[1]), voxel.light);
-		
+
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + RIGHT.normal, voxel.id))
 			RebuildSide(surfaceTool, realPosition, RIGHT, IndexToVector(voxelData.texture_lookup[2]), voxel.light);
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + LEFT.normal, voxel.id))
@@ -229,10 +228,10 @@ public partial class Chunk : Node3D
 		else light = 135;
 
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
-		surfaceTool.AddTriangleFan(new Vector3[] { b, c, a }, new Vector2[] { uvB, uvC, uvA	});
+		surfaceTool.AddTriangleFan([b, c, a], [uvB, uvC, uvA]);
 
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
-		surfaceTool.AddTriangleFan(new Vector3[] { b, d, c }, new Vector2[] { uvB, uvD, uvC });
+		surfaceTool.AddTriangleFan([b, d, c], [uvB, uvD, uvC]);
 	}
 
 	public void SetVoxel(Vector3I position, byte id)
@@ -264,7 +263,7 @@ public partial class Chunk : Node3D
 	/// Natural generation first pass
 	/// </summary>
 	public void Regenerate()
-	{	
+	{
 		for (int x = 0; x < CHUNK_SIZE.X; x++)
 		{
 			for (int z = 0; z < CHUNK_SIZE.X; z++)
@@ -294,7 +293,7 @@ public partial class Chunk : Node3D
 
 				if (Find.World.islandMode)
 				{
-					Location at = new Location() {chunkPosition = ChunkPosition, voxelPosition = new Vector3I(x, 0, z)};
+					Location at = new() {chunkPosition = ChunkPosition, voxelPosition = new Vector3I(x, 0, z)};
 					colHeight -= (int)(Find.World.islandGradient.Sample(at.GetGlobalPosition().DistanceTo(Vector3I.Zero) / (Settings.WorldSize * CHUNK_SIZE.X)).R * (CHUNK_SIZE.Y / 2));
 				}
 
@@ -349,12 +348,12 @@ public partial class Chunk : Node3D
 				Random.RandRange(0, CHUNK_SIZE.X)
 			);
 
-			Vector3I[] directions = { Vector3I.Back, Vector3I.Forward, Vector3I.Down, Vector3I.Up, Vector3I.Left, Vector3I.Right };
+			Vector3I[] directions = [Vector3I.Back, Vector3I.Forward, Vector3I.Down, Vector3I.Up, Vector3I.Left, Vector3I.Right];
 
 			int tries = 0;
 			while (oresToSpawn > 0)
 			{
-				if (tries >= 10) { /*GD.PushWarning("failed 10 attempts on placing ore");*/ break; };
+				if (tries >= 10) { /*GD.PushWarning("failed 10 attempts on placing ore");*/ break; }
 
 				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
 				allowedToOverwrite.Add(VoxelData.ID.STONE);
@@ -396,16 +395,16 @@ public partial class Chunk : Node3D
 				Random.RandRange(0, CHUNK_SIZE.X)
 			);
 
-			Vector3I[] directions = {
+			Vector3I[] directions = [
 				Vector3I.Back, Vector3I.Forward, Vector3I.Back + Vector3I.Down, Vector3I.Back + Vector3I.Up, Vector3I.Forward + Vector3I.Down, Vector3I.Forward + Vector3I.Up,
 				Vector3I.Down, Vector3I.Up, Vector3I.Down + Vector3I.Left, Vector3I.Down + Vector3I.Right, Vector3I.Up + Vector3I.Left, Vector3I.Up + Vector3I.Right,
 				Vector3I.Left, Vector3I.Right,
-			};
+			];
 
 			int tries = 0;
 			while (oresToSpawn > 0)
 			{
-				if (tries >= 50) { /*GD.PushWarning("failed 50 attempts on placing ore");*/ break; };
+				if (tries >= 50) { /*GD.PushWarning("failed 50 attempts on placing ore");*/ break; }
 
 				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
 				allowedToOverwrite.Add(VoxelData.ID.STONE);
@@ -435,7 +434,7 @@ public partial class Chunk : Node3D
 
 		for (int i = 0; i < Random.RandRange(3, 5); i++)
 			MakeOreWorm(OresData.ID.METAL);
-		
+
 		for (int i = 0; i < Random.RandRange(5, 8); i++)
 			MakeOreGrow(OresData.ID.COAL);
 
@@ -453,6 +452,8 @@ public partial class Chunk : Node3D
 		// 		}
 		// 	}
 		// }
+
+		RebuildNav();
 	}
 
 	private void FreeCollision()
@@ -463,7 +464,6 @@ public partial class Chunk : Node3D
 
 	public void DeRender()
 	{
-		FreeCollision();
 		meshInstance.Mesh = null;
 	}
 
@@ -507,15 +507,15 @@ public partial class Chunk : Node3D
 	private void SetMesh(Mesh mesh)
 	{
 		meshInstance.Mesh = mesh;
-		meshInstance.CreateTrimeshCollision();
+		// meshInstance.CreateTrimeshCollision();
 
-		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionLayerValue(2, true);
-		meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionMaskValue(2, true);
+		// meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionLayerValue(2, true);
+		// meshInstance.GetNode<StaticBody3D>("Mesh_col").SetCollisionMaskValue(2, true);
 	}
 
 	public void Rebuild()
 	{
-		CallThreadSafe(MethodName.DeRender);
+		// CallThreadSafe(MethodName.DeRender);
 
 		ArrayMesh arrayMesh = new();
 
@@ -534,8 +534,12 @@ public partial class Chunk : Node3D
 		if (arrayMesh.GetSurfaceCount() > 1)
 			arrayMesh.SurfaceSetMaterial(1, transparentMaterial);
 
-		CallThreadSafe(MethodName.SetMesh, arrayMesh);
+        CallThreadSafe(MethodName.SetMesh, arrayMesh);
+    }
 
-		RebuildNav();
+	public void RebuildCollision()
+	{
+		// CallThreadSafe(MethodName.FreeCollision);
+		// meshInstance.Mesh.CreateTrimeshShape();
 	}
 }

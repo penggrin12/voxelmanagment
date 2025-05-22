@@ -26,7 +26,7 @@ public partial class Player : CharacterBody3D, IPlayer
 	[Export] private float stopSpeed = 8f;
 	[Export] private float jumpImpulse = 5;
 	private float _jumpImpulse;
-	
+
 	private Vector3 moveInput = Vector3.Zero;
 	private float friction = 4f;
 	private bool wishJump = false;
@@ -41,7 +41,7 @@ public partial class Player : CharacterBody3D, IPlayer
 	{
 		HandleInput();
 		WalkMove((float)delta);
-	
+
 		if (!Find.DebugUi.Enabled) return;
 
         Find.DebugUi.Get<Label>("Position").Text = $"{Position.X:n3}, {Position.Y:n3}, {Position.Z:n3} ( {Mathf.Wrap(Position.X, 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(Position.Z, 0, Chunk.CHUNK_SIZE.X):n3} )";
@@ -72,7 +72,7 @@ public partial class Player : CharacterBody3D, IPlayer
 
 		Node3D collidingWith = (Node3D)ray.GetCollider();
 
-		if (collidingWith == null) return; // shouldnt happen..?
+		if (collidingWith == null) return; // should not happen..?
 
 		Node collidingWithParent = collidingWith.GetNode("../..");
 
@@ -81,13 +81,13 @@ public partial class Player : CharacterBody3D, IPlayer
 		Chunk chunk = collidingWithParent as Chunk;
 		Vector3 collisionNormal = ray.GetCollisionNormal();
 		Vector3 collisionAt = ray.GetCollisionPoint();
-		Vector3I voxelPosition = (Vector3I)(collisionAt - collisionNormal * 0.05f - new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
+		Vector3I voxelPosition = (Vector3I)(collisionAt - (collisionNormal * 0.05f) - new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X).Floor());
 
 		if (!chunk.IsVoxelSolid(voxelPosition))
 			return;
 
 		if (Input.IsActionJustPressed("break"))
-		{	
+		{
 			chunk.SetVoxel(voxelPosition, 0);
 			Find.World.UpdateChunk(chunk.ChunkPosition);
 
@@ -96,9 +96,7 @@ public partial class Player : CharacterBody3D, IPlayer
 			CpuParticles3D particles = breakDecoration.GetNode<CpuParticles3D>("Particles");
 			particles.Position = voxelPosition + new Vector3(0.5f, 0.5f, 0.5f) + new Vector3(chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X, 0, chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X);
 			particles.Emitting = true;
-			particles.Finished += () => {
-				particles.QueueFree();
-			};
+			particles.Finished += particles.QueueFree;
 		}
 
 		if (Input.IsActionJustPressed("place"))
@@ -134,12 +132,12 @@ public partial class Player : CharacterBody3D, IPlayer
 				if (wishJump)
 					velocity.Y = jumpImpulse;
 					Velocity = velocity;
-				
+
 				Velocity = UpdateVelocityGround(wishDir, delta);
 			}
 			else
 			{
-				// This doesnt
+				// This doesn't
 				if (wishJump)
 				{
 					velocity.Y = jumpImpulse;
@@ -176,7 +174,7 @@ public partial class Player : CharacterBody3D, IPlayer
 		float currentSpeed = Velocity.Dot(wishDir);
 		float addSpeed = Mathf.Clamp(maxSpeed - currentSpeed, 0, maxAcceleration * delta);
 
-		return Velocity + addSpeed * wishDir;
+		return Velocity + (addSpeed * wishDir);
 	}
 
 	private Vector3 UpdateVelocityGround(Vector3 wishDir, float delta)

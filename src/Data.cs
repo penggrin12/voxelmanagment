@@ -58,7 +58,7 @@ public static class OresData
         public VoxelData.ID voxelID;
         public Vector2I YRange;
         public Dictionary<int, float> weights;
-    } 
+    }
 
     public static readonly Dictionary<ID, Data> data = new() {
         { ID.NONE, new() }, // i don wanna mark this as nullable

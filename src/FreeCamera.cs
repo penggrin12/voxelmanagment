@@ -73,8 +73,6 @@ public partial class FreeCamera : Camera3D
                     shift = key.Pressed; break;
                 case Key.Alt:
                     alt = key.Pressed; break;
-                default:
-                    break;
             }
         }
     }
@@ -93,13 +91,13 @@ public partial class FreeCamera : Camera3D
             (float)s.ToGodotBool() - (float)w.ToGodotBool()
         );
 
-        Vector3 offset = direction.Normalized() * acceleration * velMultiplier * (float)delta
-            + velocity.Normalized() * deceleration * velMultiplier * (float)delta;
-        
+        Vector3 offset = (direction.Normalized() * acceleration * velMultiplier * (float)delta)
+            + (velocity.Normalized() * deceleration * velMultiplier * (float)delta);
+
         float speedMulti = 1f;
         if (shift) speedMulti *= SHIFT_MULTIPLIER;
         if (alt) speedMulti *= ALT_MULTIPLIER;
-    
+
         if (direction.IsZeroApprox() && offset.LengthSquared() > velocity.LengthSquared())
         {
             velocity = Vector3.Zero;

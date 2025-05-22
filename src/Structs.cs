@@ -6,6 +6,10 @@ public struct Voxel
 {
     public byte id;
     public byte light;
+
+    public static Aabb GetAABB(int x, int y, int z) {
+        return new(x, y, z, x + 1, y + 1, z + 1);
+    }
 }
 
 public struct Location

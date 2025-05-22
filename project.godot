@@ -12,7 +12,7 @@ config_version=5
 
 config/name="VoxelManagment"
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.4", "C#", "Forward Plus")
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://assets/textures/icon.svg"
 
 [autoload]
@@ -24,6 +24,10 @@ DebugDraw="*res://addons/debug_drawing/DebugDraw.cs"
 
 MaxPoolSize=10000
 StartingPoolSize=10000
+
+[display]
+
+window/vsync/vsync_mode=0
 
 [dotnet]
 

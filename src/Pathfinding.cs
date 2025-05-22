@@ -10,19 +10,21 @@ public static class Pathfinder
 {
     public static async Task<AStar3D> PopulateAStar()
     {
-        var task = new Task<AStar3D>(() => { return _PopulateAStar(); });
+        var task = new Task<AStar3D>(InternalPopulateAStar);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        task.ContinueWith((task) => { throw task.Exception.InnerException; }, TaskContinuationOptions.OnlyOnFaulted);
+        task.ContinueWith((task) => throw task.Exception.InnerException, TaskContinuationOptions.OnlyOnFaulted);
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         task.Start();
 
         return await task;
     }
 
-    private static AStar3D _PopulateAStar()
+    private static AStar3D InternalPopulateAStar()
     {
+        GD.Print("populating astar");
+
         AStar3D aStar = new();
-        List<(long, long)> connectionsMade = new();
+        List<(long, long)> connectionsMade = [];
 
         // adding points and connections of each chunk
         foreach (Chunk chunk in Find.World.GetAllChunks())
@@ -70,13 +72,12 @@ public static class Pathfinder
             if (Find.World.HasChunk(chunk.ChunkPosition + Vector2I.Left))
             {
                 otherChunk = Find.World.GetChunk(chunk.ChunkPosition + Vector2I.Left);
-                int x = 0;
 
                 for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
                 {
                     for (int z = 0; z < Chunk.CHUNK_SIZE.X; z++)
                     {
-                        long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
+                        long point1 = (long)DataPacking.PackData(0, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
 
                         if (!aStar.HasPoint(point1)) continue;
                         long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)(Chunk.CHUNK_SIZE.X - 1), (byte)(y - 1), (byte)z, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
@@ -100,11 +101,11 @@ public static class Pathfinder
                         long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
 
                         if (!aStar.HasPoint(point1)) continue;
-                        long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)x, (byte)(y - 1), (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                        long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)x, (byte)(y - 1), 0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
                             {aStar.ConnectPoints(point1, pointA); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointA));}
-                        long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)x, (byte)y, (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                        long pointB; if (aStar.HasPoint(pointB = (long)DataPacking.PackData((byte)x, (byte)y, 0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
                             {aStar.ConnectPoints(point1, pointB); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointB));}
-                        long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)x, (byte)(y + 1), (byte)0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
+                        long pointC; if (aStar.HasPoint(pointC = (long)DataPacking.PackData((byte)x, (byte)(y + 1), 0, (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
                             {aStar.ConnectPoints(point1, pointC); if (Settings.ShowEvenMoreDebugDraw) connectionsMade.Add((point1, pointC));}
                     }
                 }
@@ -112,13 +113,12 @@ public static class Pathfinder
             if (Find.World.HasChunk(chunk.ChunkPosition + Vector2I.Up))
             {
                 otherChunk = Find.World.GetChunk(chunk.ChunkPosition + Vector2I.Up);
-                int z = 0;
 
                 for (int y = 0; y < Chunk.CHUNK_SIZE.Y; y++)
                 {
                     for (int x = 0; x < Chunk.CHUNK_SIZE.X; x++)
                     {
-                        long point1 = (long)DataPacking.PackData((byte)x, (byte)y, (byte)z, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
+                        long point1 = (long)DataPacking.PackData((byte)x, (byte)y, 0, (short)chunk.ChunkPosition.X, (short)chunk.ChunkPosition.Y);
 
                         if (!aStar.HasPoint(point1)) continue;
                         long pointA; if (aStar.HasPoint(pointA = (long)DataPacking.PackData((byte)x, (byte)(y - 1), (byte)(Chunk.CHUNK_SIZE.X - 1), (short)otherChunk.ChunkPosition.X, (short)otherChunk.ChunkPosition.Y)))
@@ -140,8 +140,8 @@ public static class Pathfinder
             DataPacking.UnpackData((ulong)connection.Item2, out byte voxel2X, out byte voxel2Y, out byte voxel2Z, out short chunk2X, out short chunk2Y);
 
             DebugDraw.Line(
-                new Vector3(voxel1X + chunk1X * Chunk.CHUNK_SIZE.X + 0.5f, voxel1Y + 0.5f, voxel1Z + chunk1Y * Chunk.CHUNK_SIZE.X + 0.5f),
-                new Vector3(voxel2X + chunk2X * Chunk.CHUNK_SIZE.X + 0.5f, voxel2Y + 0.5f, voxel2Z + chunk2Y * Chunk.CHUNK_SIZE.X + 0.5f),
+                new Vector3(voxel1X + (chunk1X * Chunk.CHUNK_SIZE.X) + 0.5f, voxel1Y + 0.5f, voxel1Z + (chunk1Y * Chunk.CHUNK_SIZE.X) + 0.5f),
+                new Vector3(voxel2X + (chunk2X * Chunk.CHUNK_SIZE.X) + 0.5f, voxel2Y + 0.5f, voxel2Z + (chunk2Y * Chunk.CHUNK_SIZE.X) + 0.5f),
                 color: Colors.Red,
                 duration: 15
             );
@@ -158,7 +158,7 @@ public static class Pathfinder
         long point2 = (long)DataPacking.PackData((byte)b.voxelPosition.X, (byte)b.voxelPosition.Y, (byte)b.voxelPosition.Z, (short)b.chunkPosition.X, (short)b.chunkPosition.Y);
 
         // TODO: add some kind of option to disable fuzzy pathfind
-        float maxDist = 2.5f; // TODO: move this somewhere more appropriate
+        const float MAX_DIST = 2.5f; // TODO: move this somewhere more appropriate
 
         if (!aStar.HasPoint(point1))
         {
@@ -168,7 +168,7 @@ public static class Pathfinder
             Location newA = new() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) };
             float distToActualPoint = newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition());
 
-            if (newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition()) > maxDist)
+            if (newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition()) > MAX_DIST)
                 return (false, null);
 
             GD.Print($"point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
@@ -185,7 +185,7 @@ public static class Pathfinder
             Location newB = new() { chunkPosition = new(chunkX, chunkY), voxelPosition = new(voxelX, voxelY, voxelZ) };
             float distToActualPoint = newB.GetGlobalPosition().DistanceTo(b.GetGlobalPosition());
 
-            if (distToActualPoint > maxDist) return (false, null);
+            if (distToActualPoint > MAX_DIST) return (false, null);
 
             GD.Print($"point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
             if (Settings.ShowDebugDraw) DebugDraw.Point(newB.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Crimson, duration: 15);
