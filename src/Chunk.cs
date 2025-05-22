@@ -520,6 +520,8 @@ public partial class Chunk : Node3D
 
 	public void RebuildCollision()
 	{
+		// TODO: do our own collision with aabb's ...?
+
 		// CallThreadSafe(MethodName.FreeCollision);
 		// meshInstance.Mesh.CreateTrimeshShape();
 	}
