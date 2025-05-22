@@ -17,9 +17,9 @@ public partial class Chunk : Node3D
 	[Export] Material regularMaterial;
 	[Export] Material transparentMaterial;
 
-    private static readonly List<Vector3I> VERTICES =
-    [
-        new(0, 0, 0), // 0	   2 +--------+ 3  a+------+b
+	private static readonly List<Vector3I> VERTICES =
+	[
+		new(0, 0, 0), // 0	   2 +--------+ 3  a+------+b
 		new(1, 0, 0), // 1	    /|       /|     |      |
 		new(0, 1, 0), // 2	   / |      / |     |      |
 		new(1, 1, 0), // 3	6 +--------+ 7|    c+------+d
@@ -29,16 +29,16 @@ public partial class Chunk : Node3D
 		new(1, 1, 1)  // 7	4 +--------+ 5
 	];
 
-    public readonly record struct Side(int Vertex0, int Vertex1, int Vertex2, int Vertex3, Vector3I Normal);
+	public readonly record struct Side(int Vertex0, int Vertex1, int Vertex2, int Vertex3, Vector3I Normal);
 
 	private static readonly Side TOP = new(Vertex0: 2, Vertex1: 3, Vertex2: 6, Vertex3: 7, Normal: new Vector3I(0, 1, 0));
 	private static readonly Side BOTTOM = new(Vertex0: 4, Vertex1: 5, Vertex2: 0, Vertex3: 1, Normal: new Vector3I(0, -1, 0));
 	private static readonly Side LEFT = new(Vertex0: 7, Vertex1: 3, Vertex2: 5, Vertex3: 1, Normal: new Vector3I(1, 0, 0));
 	private static readonly Side RIGHT = new(Vertex0: 2, Vertex1: 6, Vertex2: 0, Vertex3: 4, Normal: new Vector3I(-1, 0, 0));
 	private static readonly Side BACK = new(Vertex0: 6, Vertex1: 7, Vertex2: 4, Vertex3: 5, Normal: new Vector3I(0, 0, 1));
-    private static readonly Side FRONT = new(Vertex0: 0, Vertex1: 1, Vertex2: 2, Vertex3: 3, Normal: new Vector3I(0, 0, -1));
+	private static readonly Side FRONT = new(Vertex0: 0, Vertex1: 1, Vertex2: 2, Vertex3: 3, Normal: new Vector3I(0, 0, -1));
 
-    private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
+	private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
 	public static readonly Vector2I CHUNK_SIZE = new(16, 64);
 
 	public override void _Ready()
@@ -141,7 +141,7 @@ public partial class Chunk : Node3D
 
 		foreach (long pointId in navPoints)
 		{
-            DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out _, out _);
+			DataPacking.UnpackData((ulong)pointId, out byte voxelX, out byte voxelY, out byte voxelZ, out _, out _);
 
 			Vector3I voxelOrigin = new(voxelX, voxelY, voxelZ);
 
@@ -232,13 +232,13 @@ public partial class Chunk : Node3D
 		voxels[position.X, position.Y, position.Z] = new Voxel() { id = id, light = byte.MaxValue };
 	}
 
-    /// <summary>
-    /// Fills every voxel with void
-    /// </summary>
-    public void FillBlank()
-    {
-        voxels = new Voxel[CHUNK_SIZE.X, CHUNK_SIZE.Y, CHUNK_SIZE.X];
-    }
+	/// <summary>
+	/// Fills every voxel with void
+	/// </summary>
+	public void FillBlank()
+	{
+		voxels = new Voxel[CHUNK_SIZE.X, CHUNK_SIZE.Y, CHUNK_SIZE.X];
+	}
 
 	/// <summary>
 	/// Natural generation first pass
@@ -503,11 +503,11 @@ public partial class Chunk : Node3D
 		arrayMesh = Populate(false).Commit(arrayMesh);
 		arrayMesh = Populate(true).Commit(arrayMesh);
 
-        // ShaderMaterial regularMaterial = new() { Shader = GD.Load<Shader>("res://assets/shaders/terrain.gdshader") };
-        // regularMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
+		// ShaderMaterial regularMaterial = new() { Shader = GD.Load<Shader>("res://assets/shaders/terrain.gdshader") };
+		// regularMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
 
 		// ShaderMaterial transparentMaterial = new() { Shader = GD.Load<Shader>("res://assets/shaders/terrain.gdshader") };
-        // transparentMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
+		// transparentMaterial.SetShaderParameter("tex", GD.Load<BaseMaterial3D>("res://assets/textures/terrain.png"));
 		// transparentMaterial.SetShaderParameter("allowTransparency", true);
 
 		arrayMesh.SurfaceSetMaterial(0, regularMaterial);
@@ -515,8 +515,8 @@ public partial class Chunk : Node3D
 		if (arrayMesh.GetSurfaceCount() > 1)
 			arrayMesh.SurfaceSetMaterial(1, transparentMaterial);
 
-        CallThreadSafe(MethodName.SetMesh, arrayMesh);
-    }
+		CallThreadSafe(MethodName.SetMesh, arrayMesh);
+	}
 
 	public void RebuildCollision()
 	{

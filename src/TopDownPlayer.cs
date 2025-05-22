@@ -21,8 +21,8 @@ public partial class TopDownPlayer : Node3D, IPlayer
 		}
 	}
 
-    public object GetDebugThingie()
-    {
-        throw new System.NotImplementedException();
-    }
+	public object GetDebugThingie()
+	{
+		throw new System.NotImplementedException();
+	}
 }

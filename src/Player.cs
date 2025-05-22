@@ -44,15 +44,15 @@ public partial class Player : CharacterBody3D, IPlayer
 
 		if (!Find.DebugUi.Enabled) return;
 
-        Find.DebugUi.Get<Label>("Position").Text = $"{Position.X:n3}, {Position.Y:n3}, {Position.Z:n3} ( {Mathf.Wrap(Position.X, 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(Position.Z, 0, Chunk.CHUNK_SIZE.X):n3} )";
+		Find.DebugUi.Get<Label>("Position").Text = $"{Position.X:n3}, {Position.Y:n3}, {Position.Z:n3} ( {Mathf.Wrap(Position.X, 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(Position.Z, 0, Chunk.CHUNK_SIZE.X):n3} )";
 	}
 
-    public override void _PhysicsProcess(double delta)
-    {
-        collision.GlobalRotation = Vector3.Zero;
-    }
+	public override void _PhysicsProcess(double delta)
+	{
+		collision.GlobalRotation = Vector3.Zero;
+	}
 
-    private void CameraRotation(Vector2 relative)
+	private void CameraRotation(Vector2 relative)
 	{
 		RotateY(Mathf.DegToRad(-relative.X * cameraSensitivity));
 		head.RotateX(Mathf.DegToRad(-relative.Y * cameraSensitivity));
@@ -216,8 +216,8 @@ public partial class Player : CharacterBody3D, IPlayer
 			CameraRotation(mouseMotion.Relative);
 	}
 
-    public object GetDebugThingie()
-    {
-        throw new NotImplementedException();
-    }
+	public object GetDebugThingie()
+	{
+		throw new NotImplementedException();
+	}
 }

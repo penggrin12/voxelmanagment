@@ -16,8 +16,8 @@ public partial class DebugUi : Control
 		return GetNode<VBoxContainer>("VBox").GetNode<T>(name);
 	}
 
-    public override void _Process(double delta)
-    {
-        Get<Label>("Fps").Text = $"FPS: {Performance.GetMonitor(Performance.Monitor.TimeFps)}";
-    }
+	public override void _Process(double delta)
+	{
+		Get<Label>("Fps").Text = $"FPS: {Performance.GetMonitor(Performance.Monitor.TimeFps)}";
+	}
 }
