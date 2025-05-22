@@ -29,23 +29,16 @@ public partial class Chunk : Node3D
 		new(1, 1, 1)  // 7	4 +--------+ 5
 	];
 
-	private struct Side
-	{
-		public int vertex0;
-		public int vertex1;
-		public int vertex2;
-		public int vertex3;
-		public Vector3I normal;
-	}
+    public readonly record struct Side(int Vertex0, int Vertex1, int Vertex2, int Vertex3, Vector3I Normal);
 
-	private static readonly Side TOP = new() { vertex0 = 2, vertex1 = 3, vertex2 = 6, vertex3 = 7, normal = new Vector3I(0, 1, 0)};
-	private static readonly Side BOTTOM = new() { vertex0 = 4, vertex1 = 5, vertex2 = 0, vertex3 = 1, normal = new Vector3I(0, -1, 0)};
-	private static readonly Side LEFT = new() { vertex0 = 7, vertex1 = 3, vertex2 = 5, vertex3 = 1, normal = new Vector3I(1, 0, 0)};
-	private static readonly Side RIGHT = new() { vertex0 = 2, vertex1 = 6, vertex2 = 0, vertex3 = 4, normal = new Vector3I(-1, 0, 0)};
-	private static readonly Side BACK = new() { vertex0 = 6, vertex1 = 7, vertex2 = 4, vertex3 = 5, normal = new Vector3I(0, 0, 1)};
-	private static readonly Side FRONT = new() { vertex0 = 3, vertex1 = 2, vertex2 = 1, vertex3 = 0, normal = new Vector3I(0, 0, -1)};
+	private static readonly Side TOP = new(Vertex0: 2, Vertex1: 3, Vertex2: 6, Vertex3: 7, Normal: new Vector3I(0, 1, 0));
+	private static readonly Side BOTTOM = new(Vertex0: 4, Vertex1: 5, Vertex2: 0, Vertex3: 1, Normal: new Vector3I(0, -1, 0));
+	private static readonly Side LEFT = new(Vertex0: 7, Vertex1: 3, Vertex2: 5, Vertex3: 1, Normal: new Vector3I(1, 0, 0));
+	private static readonly Side RIGHT = new(Vertex0: 2, Vertex1: 6, Vertex2: 0, Vertex3: 4, Normal: new Vector3I(-1, 0, 0));
+	private static readonly Side BACK = new(Vertex0: 6, Vertex1: 7, Vertex2: 4, Vertex3: 5, Normal: new Vector3I(0, 0, 1));
+    private static readonly Side FRONT = new(Vertex0: 0, Vertex1: 1, Vertex2: 2, Vertex3: 3, Normal: new Vector3I(0, 0, -1));
 
-	private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
+    private static readonly Vector2I TEXTURE_ATLAS_SIZE = new(16, 16);
 	public static readonly Vector2I CHUNK_SIZE = new(16, 64);
 
 	public override void _Ready()
@@ -81,7 +74,7 @@ public partial class Chunk : Node3D
 
 	public static bool IsVoxelTranslucent(byte voxelID)
 	{
-		return voxelID <= 0 || VoxelData.DATA[voxelID].translucent;
+		return voxelID <= 0 || VoxelData.DATA[voxelID].Translucent;
 	}
 
 	public bool IsVoxelSolid(Vector3I position)
@@ -91,7 +84,7 @@ public partial class Chunk : Node3D
 	}
 	public static bool IsVoxelSolid(byte voxelID)
 	{
-		return voxelID > 0 && VoxelData.DATA[voxelID].solid;
+		return voxelID > 0 && VoxelData.DATA[voxelID].Solid;
 	}
 
 	public bool IsVoxelSolidForThisVoxel(Vector3I position, byte askerVoxelID)
@@ -117,7 +110,7 @@ public partial class Chunk : Node3D
 		if (!IsVoxelInBounds(position)) return false;
 
 		byte voxelID = GetVoxel(position).id;
-		return VoxelData.DATA[voxelID].solid || (askerVoxelID == voxelID);
+		return VoxelData.DATA[voxelID].Solid || (askerVoxelID == voxelID);
 	}
 
 	private void RebuildNav()
@@ -184,20 +177,20 @@ public partial class Chunk : Node3D
 		Vector3I realPosition = new(voxelPosition.X + (ChunkPosition.X * CHUNK_SIZE.X), voxelPosition.Y, voxelPosition.Z + (ChunkPosition.Y * CHUNK_SIZE.X));
 		VoxelData.Data voxelData = VoxelData.DATA[voxel.id];
 
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + FRONT.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, FRONT, IndexToVector(voxelData.texture_lookup[0]), voxel.light);
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + BACK.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, BACK, IndexToVector(voxelData.texture_lookup[1]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + FRONT.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, FRONT, IndexToVector(voxelData.Texture_lookup[0]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + BACK.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, BACK, IndexToVector(voxelData.Texture_lookup[1]), voxel.light);
 
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + RIGHT.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, RIGHT, IndexToVector(voxelData.texture_lookup[2]), voxel.light);
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + LEFT.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, LEFT, IndexToVector(voxelData.texture_lookup[3]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + RIGHT.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, RIGHT, IndexToVector(voxelData.Texture_lookup[2]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + LEFT.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, LEFT, IndexToVector(voxelData.Texture_lookup[3]), voxel.light);
 
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + BOTTOM.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, BOTTOM, IndexToVector(voxelData.texture_lookup[4]), voxel.light);
-		if (!IsVoxelSolidForThisVoxel(voxelPosition + TOP.normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, TOP, IndexToVector(voxelData.texture_lookup[5]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + BOTTOM.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, BOTTOM, IndexToVector(voxelData.Texture_lookup[4]), voxel.light);
+		if (!IsVoxelSolidForThisVoxel(voxelPosition + TOP.Normal, voxel.id))
+			RebuildSide(surfaceTool, realPosition, TOP, IndexToVector(voxelData.Texture_lookup[5]), voxel.light);
 	}
 
 	private static void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
@@ -207,10 +200,10 @@ public partial class Chunk : Node3D
 		//  |      | b-d-c
 		// c+------+d
 
-		Vector3I a = VERTICES[side.vertex0] + realPos;
-		Vector3I b = VERTICES[side.vertex1] + realPos;
-		Vector3I c = VERTICES[side.vertex2] + realPos;
-		Vector3I d = VERTICES[side.vertex3] + realPos;
+		Vector3I a = VERTICES[side.Vertex0] + realPos;
+		Vector3I b = VERTICES[side.Vertex1] + realPos;
+		Vector3I c = VERTICES[side.Vertex2] + realPos;
+		Vector3I d = VERTICES[side.Vertex3] + realPos;
 
 		Vector2 uvOffset = textureAtlasOffset / TEXTURE_ATLAS_SIZE;
 		float height = 1.0f / TEXTURE_ATLAS_SIZE.Y;
@@ -222,9 +215,9 @@ public partial class Chunk : Node3D
 		Vector2 uvD = uvOffset + new Vector2(width, height);
 
 		// this is probably horrible
-		if (side.normal == Vector3I.Up) light = 255;
-		else if (side.normal == Vector3I.Back) light = 180;
-		else if (side.normal == Vector3I.Right) light = 165;
+		if (side.Normal == Vector3I.Up) light = 255;
+		else if (side.Normal == Vector3I.Back) light = 180;
+		else if (side.Normal == Vector3I.Right) light = 165;
 		else light = 135;
 
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
@@ -325,7 +318,7 @@ public partial class Chunk : Node3D
 		void MakeOreWorm(OresData.ID oreID)
 		{
 			OresData.Data oreData = OresData.data[oreID];
-			int oresToSpawn = oreData.weights.RandomElementByWeight(e => e.Value).Key;
+			int oresToSpawn = oreData.Weights.RandomElementByWeight(e => e.Value).Key;
 
 			// GD.Print($"gonna make {oresToSpawn} ores");
 			List<Vector3I> ores = new(oresToSpawn);
@@ -343,7 +336,7 @@ public partial class Chunk : Node3D
 			{
 				if (tries >= 10) { /*GD.PushWarning("failed 10 attempts on placing ore");*/ break; }
 
-				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
+				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.VoxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
 				allowedToOverwrite.Add(VoxelData.ID.STONE);
 
 				if (
@@ -366,13 +359,13 @@ public partial class Chunk : Node3D
 			}
 
 			foreach (Vector3I metalPosition in ores)
-				SetVoxel(metalPosition, (byte)oreData.voxelID);
+				SetVoxel(metalPosition, (byte)oreData.VoxelID);
 		}
 
 		void MakeOreGrow(OresData.ID oreID)
 		{
 			OresData.Data oreData = OresData.data[oreID];
-			int oresToSpawn = oreData.weights.RandomElementByWeight(e => e.Value).Key;
+			int oresToSpawn = oreData.Weights.RandomElementByWeight(e => e.Value).Key;
 
 			// GD.Print($"gonna make {oresToSpawn} ores");
 			List<Vector3I> ores = new(oresToSpawn);
@@ -394,7 +387,7 @@ public partial class Chunk : Node3D
 			{
 				if (tries >= 50) { /*GD.PushWarning("failed 50 attempts on placing ore");*/ break; }
 
-				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.voxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
+				List<VoxelData.ID> allowedToOverwrite = OresData.data.Select((x) => x.Value.VoxelID).Where((x) => x != VoxelData.ID.VOID).ToList();
 				allowedToOverwrite.Add(VoxelData.ID.STONE);
 
 				if (
@@ -417,7 +410,7 @@ public partial class Chunk : Node3D
 			}
 
 			foreach (Vector3I metalPosition in ores)
-				SetVoxel(metalPosition, (byte)oreData.voxelID);
+				SetVoxel(metalPosition, (byte)oreData.VoxelID);
 		}
 
 		for (int i = 0; i < Random.RandRange(3, 5); i++)
@@ -474,7 +467,7 @@ public partial class Chunk : Node3D
 
 					if (voxel.id <= 0) continue;
 
-					bool isTransparent = VoxelData.DATA[voxel.id].translucent;
+					bool isTransparent = VoxelData.DATA[voxel.id].Translucent;
 
 					if (isTransparent && !transparentPass) continue;
 					if (!isTransparent && transparentPass) continue;

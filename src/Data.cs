@@ -20,27 +20,20 @@ public static class VoxelData
         WATER,
     }
 
-    public struct Data
-    {
-        public byte strongness;
-        public byte[] texture_lookup; // front, back,    right, left,    bottom, top
-        public bool translucent;
-        public bool solid;
-    }
-
-    public static readonly Data[] DATA = {
-        new() { strongness = 0  , texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   }, translucent = true , solid = false },
-        new() { strongness = 255, texture_lookup = new byte[6] { 0  , 0  , 0  , 0  , 0  , 0   }, translucent = false, solid = true  },
-        new() { strongness = 30 , texture_lookup = new byte[6] { 1  , 1  , 1  , 1  , 1  , 1   }, translucent = false, solid = true  },
-        new() { strongness = 5  , texture_lookup = new byte[6] { 2  , 2  , 2  , 2  , 2  , 2   }, translucent = false, solid = true  },
-        new() { strongness = 4  , texture_lookup = new byte[6] { 4  , 4  , 4  , 4  , 2  , 3   }, translucent = false, solid = true  },
-        new() { strongness = 20 , texture_lookup = new byte[6] { 5  , 5  , 5  , 5  , 5  , 5   }, translucent = false, solid = true  },
-        new() { strongness = 40 , texture_lookup = new byte[6] { 6  , 6  , 6  , 6  , 6  , 6   }, translucent = false, solid = true  },
-        new() { strongness = 100, texture_lookup = new byte[6] { 7  , 7  , 7  , 7  , 7  , 7   }, translucent = false, solid = true  },
-        new() { strongness = 70 , texture_lookup = new byte[6] { 8  , 8  , 8  , 8  , 8  , 8   }, translucent = false, solid = true  },
-        new() { strongness = 70 , texture_lookup = new byte[6] { 9  , 9  , 9  , 9  , 9  , 9   }, translucent = false, solid = true  },
-        new() { strongness = 70 , texture_lookup = new byte[6] { 10 , 10 , 10 , 10 , 10 , 10  }, translucent = true , solid = false  },
-    };
+    public readonly record struct Data(byte Strongness, byte[] Texture_lookup, bool Translucent, bool Solid);
+    public static readonly Data[] DATA = [
+        new(Strongness: 0  , Texture_lookup: [0 , 0 , 0 , 0 , 0 , 0 ], Translucent: true,  Solid: false),
+        new(Strongness: 255, Texture_lookup: [0 , 0 , 0 , 0 , 0 , 0 ], Translucent: false, Solid: true ),
+        new(Strongness: 30 , Texture_lookup: [1 , 1 , 1 , 1 , 1 , 1 ], Translucent: false, Solid: true ),
+        new(Strongness: 5  , Texture_lookup: [2 , 2 , 2 , 2 , 2 , 2 ], Translucent: false, Solid: true ),
+        new(Strongness: 4  , Texture_lookup: [4 , 4 , 4 , 4 , 2 , 3 ], Translucent: false, Solid: true ),
+        new(Strongness: 20 , Texture_lookup: [5 , 5 , 5 , 5 , 5 , 5 ], Translucent: false, Solid: true ),
+        new(Strongness: 40 , Texture_lookup: [6 , 6 , 6 , 6 , 6 , 6 ], Translucent: false, Solid: true ),
+        new(Strongness: 100, Texture_lookup: [7 , 7 , 7 , 7 , 7 , 7 ], Translucent: false, Solid: true ),
+        new(Strongness: 70 , Texture_lookup: [8 , 8 , 8 , 8 , 8 , 8 ], Translucent: false, Solid: true ),
+        new(Strongness: 70 , Texture_lookup: [9 , 9 , 9 , 9 , 9 , 9 ], Translucent: false, Solid: true ),
+        new(Strongness: 70 , Texture_lookup: [10, 10, 10, 10, 10, 10], Translucent: true,  Solid: false),
+    ];
 }
 
 public static class OresData
@@ -52,17 +45,10 @@ public static class OresData
         COAL,
     }
 
-    public struct Data
-    {
-        public bool breakable;
-        public VoxelData.ID voxelID;
-        public Vector2I YRange;
-        public Dictionary<int, float> weights;
-    }
-
+    public readonly record struct Data(bool Breakable, VoxelData.ID VoxelID, Vector2I YRange, Dictionary<int, float> Weights);
     public static readonly Dictionary<ID, Data> data = new() {
         { ID.NONE, new() }, // i don wanna mark this as nullable
-        { ID.METAL, new() { breakable = true, voxelID = VoxelData.ID.METAL_ORE, YRange = new(1, 27), weights = new() { {3, 0.50f}, {4, 0.45f}, {5, 0.30f}, {6, 0.15f}, {7, 0.05f} } } },
-        { ID.COAL, new() { breakable = true, voxelID = VoxelData.ID.COAL_ORE, YRange = new(1, 27), weights = new() { {23, 0.50f}, {24, 0.45f}, {25, 0.30f}, {26, 0.15f}, {27, 0.05f} } } },
+        { ID.METAL, new(Breakable: true, VoxelID: VoxelData.ID.METAL_ORE, YRange: new(1, 27), Weights: new() { { 3, 0.50f }, { 4, 0.45f }, { 5, 0.30f }, { 6, 0.15f }, { 7, 0.05f } }) },
+        { ID.COAL, new(Breakable: true, VoxelID: VoxelData.ID.COAL_ORE, YRange: new(1, 27), Weights: new() { { 23, 0.50f }, { 24, 0.45f }, { 25, 0.30f }, { 26, 0.15f }, { 27, 0.05f } }) },
     };
 }
