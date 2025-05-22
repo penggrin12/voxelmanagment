@@ -8,7 +8,7 @@ namespace Game;
 public partial class Chunk : Node3D
 {
 	[Export] public Vector2I ChunkPosition = Vector2I.Zero;
-	public Voxel[][][] voxels;
+	public Voxel[,,] voxels;
 	public List<long> navPoints = [];
 	public List<(long, long)> navConnections = [];
 
@@ -65,7 +65,7 @@ public partial class Chunk : Node3D
 
 	public Voxel GetVoxel(Vector3I position)
 	{
-		return voxels[position.X][position.Y][position.Z];
+		return voxels[position.X, position.Y, position.Z];
 	}
 
 	public static bool IsVoxelInBounds(Vector3I position)
@@ -135,9 +135,9 @@ public partial class Chunk : Node3D
 					if (y < 1) continue; // too low don't allow
 
 					// use GetVoxel or nah?
-					if (voxels[x][y + 1][z].id > 0) continue; // voxel above is air
-					if (voxels[x][y][z].id > 0) continue; // this voxel is air
-					if (voxels[x][y - 1][z].id <= 0) continue; // voxel below is solid
+					if (voxels[x, y + 1, z].id > 0) continue; // voxel above is air
+					if (voxels[x, y, z].id > 0) continue; // this voxel is air
+					if (voxels[x, y - 1, z].id <= 0) continue; // voxel below is solid
 
 					navPoints.Add((long)DataPacking.PackData(x, y, z, (short)ChunkPosition.X, (short)ChunkPosition.Y));
 				}
@@ -236,28 +236,16 @@ public partial class Chunk : Node3D
 
 	public void SetVoxel(Vector3I position, byte id)
 	{
-		voxels[position.X][position.Y][position.Z] = new Voxel() { id = id, light = byte.MaxValue };
+		voxels[position.X, position.Y, position.Z] = new Voxel() { id = id, light = byte.MaxValue };
 	}
 
-	/// <summary>
-	/// Fills every voxel with void
-	/// </summary>
-	public void FillBlank()
-	{
-		voxels = new Voxel[CHUNK_SIZE.X][][];
-		for (int x = 0; x < CHUNK_SIZE.X; x++)
-		{
-			voxels[x] = new Voxel[CHUNK_SIZE.Y][];
-			for (int y = 0; y < CHUNK_SIZE.Y; y++)
-			{
-				voxels[x][y] = new Voxel[CHUNK_SIZE.X];
-				for (int z = 0; z < CHUNK_SIZE.X; z++)
-				{
-					SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.VOID);
-				}
-			}
-		}
-	}
+    /// <summary>
+    /// Fills every voxel with void
+    /// </summary>
+    public void FillBlank()
+    {
+        voxels = new Voxel[CHUNK_SIZE.X, CHUNK_SIZE.Y, CHUNK_SIZE.X];
+    }
 
 	/// <summary>
 	/// Natural generation first pass
