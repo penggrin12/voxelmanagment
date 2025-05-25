@@ -70,20 +70,17 @@ public partial class World : Node3D
 
 			// int m = 0;
 
-			for (int i = 0; i < chunksToRender.Count; i++)
+			while (chunksToRender.TryDequeue(out Vector2I chunkPosition))
 			{
-				while (chunksToRender.TryDequeue(out Vector2I chunkPosition))
-				{
-					// Stopwatch inner_stopwatch = new();
-					// inner_stopwatch.Start();
+				// Stopwatch inner_stopwatch = new();
+				// inner_stopwatch.Start();
 
-					chunks[chunkPosition].Rebuild();
-					chunks[chunkPosition].RebuildCollision();
+				chunks[chunkPosition].Rebuild();
+				chunks[chunkPosition].RebuildCollision();
 
-					// inner_stopwatch.Stop();
-					// GD.Print($"took time to rebuild [{chunkPosition}]: {inner_stopwatch.Elapsed.Milliseconds} ms.");
-					// m += inner_stopwatch.Elapsed.Milliseconds;
-				}
+				// inner_stopwatch.Stop();
+				// GD.Print($"took time to rebuild [{chunkPosition}]: {inner_stopwatch.Elapsed.Milliseconds} ms.");
+				// m += inner_stopwatch.Elapsed.Milliseconds;
 			}
 
 			// stopwatch.Stop();
