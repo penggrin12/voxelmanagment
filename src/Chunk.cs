@@ -220,6 +220,14 @@ public partial class Chunk : Node3D
 		else if (side.Normal == Vector3I.Right) light = 165;
 		else light = 135;
 
+		// hack fix uvs for -z (#1)
+		if (side.Normal == new Vector3I(0, 0, -1)) {
+			uvA = uvOffset + new Vector2(0, height);
+			uvB = uvOffset + new Vector2(width, height);
+			uvC = uvOffset + Vector2.Zero;
+			uvD = uvOffset + new Vector2(width, 0);
+		}
+
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
 		surfaceTool.AddTriangleFan([b, c, a], [uvB, uvC, uvA]);
 
