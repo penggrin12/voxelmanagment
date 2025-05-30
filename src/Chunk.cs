@@ -56,10 +56,16 @@ public partial class Chunk : Node3D
 		return (byte)(vector.X + (TEXTURE_ATLAS_SIZE.Y * vector.Y));
 	}
 
-	public Voxel GetVoxel(Vector3I position)
-	{
-		return voxels[position.X, position.Y, position.Z];
-	}
+	public ref readonly Voxel GetVoxelRefReadonly(Vector3I position) => ref voxels[position.X, position.Y, position.Z];
+	public ref readonly Voxel GetVoxelRefReadonly(int x, int y, int z) => ref voxels[x, y, z];
+
+	public ref Voxel GetVoxelRef(Vector3I position) => ref voxels[position.X, position.Y, position.Z];
+	public ref Voxel GetVoxelRef(int x, int y, int z) => ref voxels[x, y, z];
+
+	public Voxel GetVoxel(Vector3I position) => voxels[position.X, position.Y, position.Z];
+	public Voxel GetVoxel(int x, int y, int z) => voxels[x, y, z];
+	public void SetVoxel(Vector3I position, byte id) => SetVoxel(position.X, position.Y, position.Z, id);
+	public void SetVoxel(int x, int y, int z, byte id) => voxels[x, y, z] = new Voxel() { id = id, light = byte.MaxValue };
 
 	public static bool IsVoxelInBounds(Vector3I position)
 	{
@@ -69,7 +75,7 @@ public partial class Chunk : Node3D
 	public bool IsVoxelTranslucent(Vector3I position)
 	{
 		if (!IsVoxelInBounds(position)) return false;
-		return IsVoxelTranslucent(GetVoxel(position).id);
+		return IsVoxelTranslucent(GetVoxelRefReadonly(position).id);
 	}
 
 	public static bool IsVoxelTranslucent(byte voxelID)
@@ -80,7 +86,7 @@ public partial class Chunk : Node3D
 	public bool IsVoxelSolid(Vector3I position)
 	{
 		if (!IsVoxelInBounds(position)) return false;
-		return IsVoxelSolid(GetVoxel(position).id);
+		return IsVoxelSolid(GetVoxelRefReadonly(position).id);
 	}
 	public static bool IsVoxelSolid(byte voxelID)
 	{
@@ -109,7 +115,7 @@ public partial class Chunk : Node3D
 
 		if (!IsVoxelInBounds(position)) return false;
 
-		byte voxelID = GetVoxel(position).id;
+		byte voxelID = GetVoxelRefReadonly(position).id;
 		return VoxelData.DATA[voxelID].Solid || (askerVoxelID == voxelID);
 	}
 
@@ -127,10 +133,13 @@ public partial class Chunk : Node3D
 					if (y + 1 >= CHUNK_SIZE.Y) continue; // TODO too high don't allow
 					if (y < 1) continue; // too low don't allow
 
-					// use GetVoxel or nah?
-					if (voxels[x, y + 1, z].id > 0) continue; // voxel above is air
-					if (voxels[x, y, z].id > 0) continue; // this voxel is air
-					if (voxels[x, y - 1, z].id <= 0) continue; // voxel below is solid
+					ref readonly Voxel aboveVoxel = ref GetVoxelRefReadonly(x, y + 1, z);
+					ref readonly Voxel thisVoxel = ref GetVoxelRefReadonly(x, y, z);
+					ref readonly Voxel belowVoxel = ref GetVoxelRefReadonly(x, y - 1, z);
+
+					if (aboveVoxel.id > 0) continue; // voxel above is air
+					if (thisVoxel.id > 0) continue; // this voxel is air
+					if (belowVoxel.id <= 0) continue; // voxel below is solid
 
 					navPoints.Add((long)DataPacking.PackData(x, y, z, (short)ChunkPosition.X, (short)ChunkPosition.Y));
 				}
@@ -161,9 +170,9 @@ public partial class Chunk : Node3D
 
 						if (navConnections.Contains((pointId, destPacked))) continue;
 
-						if (GetVoxel(dest).id > 0) continue;
-						if (GetVoxel(dest + Vector3I.Down).id <= 0) continue;
-						if (GetVoxel(dest + Vector3I.Up).id > 0) continue;
+						if (GetVoxelRefReadonly(dest).id > 0) continue;
+						if (GetVoxelRefReadonly(dest + Vector3I.Down).id <= 0) continue;
+						if (GetVoxelRefReadonly(dest + Vector3I.Up).id > 0) continue;
 
 						navConnections.Add((pointId, destPacked));
 					}
@@ -235,11 +244,6 @@ public partial class Chunk : Node3D
 		surfaceTool.AddTriangleFan([b, d, c], [uvB, uvD, uvC]);
 	}
 
-	public void SetVoxel(Vector3I position, byte id)
-	{
-		voxels[position.X, position.Y, position.Z] = new Voxel() { id = id, light = byte.MaxValue };
-	}
-
 	/// <summary>
 	/// Fills every voxel with void
 	/// </summary>
@@ -298,26 +302,26 @@ public partial class Chunk : Node3D
 
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
-					if (y == 0) { SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.HARDSTONE); continue; }
-					if (y == 1 && colHeight <= 0) { SetVoxel(new Vector3I(x, y, z), (byte)voxelID); continue; }
+					if (y == 0) { SetVoxel(x, y, z, (byte)VoxelData.ID.HARDSTONE); continue; }
+					if (y == 1 && colHeight <= 0) { SetVoxel(x, y, z, (byte)voxelID); continue; }
 					if (y > colHeight)
 					{
-						if (y <= 18) SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.WATER);
+						if (y <= 18) SetVoxel(x, y, z, (byte)VoxelData.ID.WATER);
 						continue;
 					}
 
 					if (new List<VoxelData.ID>() { VoxelData.ID.GRASS, VoxelData.ID.SAND }.Contains(voxelID))
 					{
 						if (y == colHeight)
-							SetVoxel(new Vector3I(x, y, z), (byte)voxelID);
+							SetVoxel(x, y, z, (byte)voxelID);
 						else if (y < colHeight && y >= colHeight - Random.Next(3, 5))
-							SetVoxel(new Vector3I(x, y, z), voxelID == VoxelData.ID.SAND ? (byte)voxelID : (byte)VoxelData.ID.DIRT);
+							SetVoxel(x, y, z, voxelID == VoxelData.ID.SAND ? (byte)voxelID : (byte)VoxelData.ID.DIRT);
 						else
-							SetVoxel(new Vector3I(x, y, z), (byte)VoxelData.ID.STONE);
+							SetVoxel(x, y, z, (byte)VoxelData.ID.STONE);
 					}
 					else
 					{
-						SetVoxel(new Vector3I(x, y, z), (byte)voxelID);
+						SetVoxel(x, y, z, (byte)voxelID);
 					}
 				}
 			}
@@ -350,7 +354,7 @@ public partial class Chunk : Node3D
 				if (
 					ores.Contains(metalAt) ||
 					!IsVoxelInBounds(metalAt) ||
-					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxel(metalAt).id)
+					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxelRefReadonly(metalAt).id)
 				)
 				{
 					tries++;
@@ -401,7 +405,7 @@ public partial class Chunk : Node3D
 				if (
 					ores.Contains(metalAt) ||
 					!IsVoxelInBounds(metalAt) ||
-					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxel(metalAt).id)
+					!allowedToOverwrite.Contains((VoxelData.ID)GetVoxelRefReadonly(metalAt).id)
 				)
 				{
 					tries++;
@@ -471,7 +475,7 @@ public partial class Chunk : Node3D
 				for (int z = 0; z < CHUNK_SIZE.X; z++)
 				{
 					Vector3I voxelPosition = new(x, y, z);
-					Voxel voxel = GetVoxel(voxelPosition);
+					Voxel voxel = GetVoxelRefReadonly(voxelPosition);
 
 					if (voxel.id <= 0) continue;
 
