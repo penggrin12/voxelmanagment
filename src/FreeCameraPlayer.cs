@@ -24,7 +24,7 @@ public partial class FreeCameraPlayer : Node3D, IPlayer
 
 	public override void _Process(double delta)
 	{
-		Find.DebugUi.Get<Label>("Position").Text = $"{camera.Position.X + (Chunk.CHUNK_SIZE.X / 2):n3}, {camera.Position.Y:n3}, {camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2):n3} ( {Mathf.Wrap(camera.Position.X + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(camera.Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3} )";
+		Find.DebugUi.Get<Label>("Position").Text = $"POS: {camera.Position.X + (Chunk.CHUNK_SIZE.X / 2):n3}, {camera.Position.Y:n3}, {camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2):n3} ( {Mathf.Wrap(camera.Position.X + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3}, {Mathf.Wrap(camera.Position.Y, 0, Chunk.CHUNK_SIZE.Y):n3}, {Mathf.Wrap(camera.Position.Z + (Chunk.CHUNK_SIZE.X / 2), 0, Chunk.CHUNK_SIZE.X):n3} )";
 
 		ray.TargetPosition = GetViewport().GetCamera3D().ProjectLocalRayNormal(GetViewport().GetMousePosition()) * 150;
 		ray.ForceRaycastUpdate();

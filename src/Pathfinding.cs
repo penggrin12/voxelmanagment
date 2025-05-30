@@ -21,7 +21,7 @@ public static class Pathfinder
 
 	private static AStar3D InternalPopulateAStar()
 	{
-		GD.Print("populating astar");
+		GD.Print("[Pathfinder] populating astar ...");
 
 		AStar3D aStar = new();
 		List<(long, long)> connectionsMade = [];
@@ -132,6 +132,9 @@ public static class Pathfinder
 			}
 		}
 
+		// connectionsMade with be empty if ShowEvenMoreDebugDraw is false
+		GD.Print($"[Pathfinder] done populating astar ({aStar.GetPointCount()} points{(Settings.ShowEvenMoreDebugDraw ? $" and {connectionsMade.Count} connections" : "")})");
+
 		// debug draw for each connection
 		if (!Settings.ShowDebugDraw) return aStar;
 		foreach ((long, long) connection in connectionsMade)
@@ -171,7 +174,7 @@ public static class Pathfinder
 			if (newA.GetGlobalPosition().DistanceTo(a.GetGlobalPosition()) > MAX_DIST)
 				return (false, null);
 
-			GD.Print($"point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
+			GD.Print($"[Pathfinder] point1 a bit too far [{distToActualPoint}], but its fine: {newA}, {newA.GetGlobalPosition()}");
 			if (Settings.ShowDebugDraw) DebugDraw.Point(newA.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Cyan, duration: 15);
 
 			return GetPath(aStar, newA, b);
@@ -187,7 +190,7 @@ public static class Pathfinder
 
 			if (distToActualPoint > MAX_DIST) return (false, null);
 
-			GD.Print($"point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
+			GD.Print($"[Pathfinder] point2 a bit too far [{distToActualPoint}], but its fine: {newB}, {newB.GetGlobalPosition()}");
 			if (Settings.ShowDebugDraw) DebugDraw.Point(newB.GetGlobalPosition() + new Vector3(0.5f, 0.5f, 0.5f), color: Colors.Crimson, duration: 15);
 
 			return GetPath(aStar, a, newB);

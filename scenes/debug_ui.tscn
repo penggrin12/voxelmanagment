@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://bbu0b8ofnh5y1"]
+[gd_scene load_steps=3 format=3 uid="uid://bbu0b8ofnh5y1"]
 
-[ext_resource type="Script" path="res://src/DebugUi.cs" id="1_p2vx2"]
+[ext_resource type="Script" uid="uid://csbqvsomgb0fl" path="res://src/DebugUi.cs" id="1_p2vx2"]
+[ext_resource type="FontFile" uid="uid://cfuy5a627mson" path="res://assets/RobotoMono-VariableFont_wght.ttf" id="2_bth2w"]
 
 [node name="DebugUI" type="Control"]
 layout_mode = 3
@@ -16,14 +17,34 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
+[node name="Frame" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("2_bth2w")
+text = "	..."
+
 [node name="Memory" type="Label" parent="VBox"]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("2_bth2w")
 text = "	..."
 
 [node name="Position" type="Label" parent="VBox"]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("2_bth2w")
 text = "	..."
 
 [node name="Fps" type="Label" parent="VBox"]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("2_bth2w")
 text = "	..."

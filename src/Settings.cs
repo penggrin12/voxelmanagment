@@ -30,16 +30,17 @@ public static class Settings
 
 	private static void LoadSettingsFile(string path)
 	{
+		Godot.GD.Print($"[Settings] gonna load from: {path}");
 		using StreamReader textReader = new(new FileStream(path, FileMode.Open, FileAccess.Read));
 		foreach (KeyValuePair<string, object> setting in JsonConvert.DeserializeObject<Dictionary<string, object>>(textReader.ReadToEnd()))
 		{
 			if (setting.Key == "FileVersion")
 			{
-				Godot.GD.Print($"got settings versioned {setting.Value}");
+				Godot.GD.Print($"[Settings] version: {setting.Value}");
 
 				if (((ushort)(long)setting.Value) != SETTINGS_VERSION)
 				{
-					Godot.GD.PushWarning("mismatch settings versions with loaded file, rewriting file!");
+					Godot.GD.PushWarning("[Settings] mismatch version, rewriting file!");
 					NewSettingsFile(path);
 					LoadSettingsFile(path);
 					return;
@@ -48,7 +49,7 @@ public static class Settings
 				continue;
 			}
 
-			Godot.GD.Print($"{setting.Key}: {setting.Value}");
+			Godot.GD.Print($"[Settings] - {setting.Key}: {setting.Value}");
 			PropertyInfo field = typeof(Settings).GetProperty(setting.Key);
 
 			if (field.PropertyType == typeof(int)) // Json.Net gives longs no matter what

@@ -18,6 +18,7 @@ public partial class DebugUi : Control
 
 	public override void _Process(double delta)
 	{
-		Get<Label>("Fps").Text = $"FPS: {Performance.GetMonitor(Performance.Monitor.TimeFps)}";
+		Get<Label>("Frame").Text = $"FRM: {Engine.GetProcessFrames()}";
+		Get<Label>("Fps").Text = $"FPS: {Performance.GetMonitor(Performance.Monitor.TimeFps)} ({Performance.GetMonitor(Performance.Monitor.TimeProcess)} ms)";
 	}
 }

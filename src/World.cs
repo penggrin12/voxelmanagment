@@ -139,6 +139,19 @@ public partial class World : Node3D
 		SetChunk(newChunk.ChunkPosition, newChunk);
 		chunksToGenerate.Enqueue(newChunk.ChunkPosition);
 		UpdateChunk(chunkPosition);
+
+		if (Settings.ShowDebugDraw)
+		{
+			DebugDraw.Box(
+				new Vector3(
+					(chunkPosition.X * Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2),
+					Chunk.CHUNK_SIZE.Y / 2,
+					(chunkPosition.Y * Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2)
+				),
+				new Vector3(Chunk.CHUNK_SIZE.X, Chunk.CHUNK_SIZE.Y, Chunk.CHUNK_SIZE.X),
+				duration: 999999
+			);
+		}
 	}
 
 	public Voxel GetVoxel(Vector3I position) { return GetVoxel(Location.FromGlobalPosition(position)); }
@@ -212,7 +225,9 @@ public partial class World : Node3D
 
 				if (HasChunk(chunkPositionToMake)) continue;
 
-				GD.Print($"gonna make {chunkPositionToMake}");
+#if DEBUG
+				GD.Print($"[World] gonna make {chunkPositionToMake}");
+#endif
 				MakeChunk(chunkPositionToMake);
 			}
 		}
@@ -239,6 +254,8 @@ public partial class World : Node3D
 
 	private async Task MakeStructures()
 	{
+		GD.Print("[World] making structures ...");
+
 		for (int i = 0; i < 100; i++)
 		{
 			var chunkPos = new Vector2I(
@@ -251,7 +268,8 @@ public partial class World : Node3D
 			// chunksToRender.Enqueue(chunkPos);
 			await RebuildChunkAndNeighboursLazy(chunkPos);
 		}
-		GD.Print("done making structures");
+
+		GD.Print("[World] done making structures");
 	}
 
 	public void AddEntity(IEntity entity)
@@ -319,10 +337,27 @@ public partial class World : Node3D
 
 		MakeChunk(Vector2I.Zero);
 
+#if DEBUG
+		System.Diagnostics.Stopwatch firstLoadStopwatch = new();
+		firstLoadStopwatch.Start();
+#endif
+
 		if (makeAllTheChunks)
 			MakeWorldChunks();
 
-		WorldChunksGenerationComplete += async () => { await MakeStructures(); await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame); AStar = await Pathfinder.PopulateAStar(); GenerateEntities(); };
+		WorldChunksGenerationComplete += async () =>
+		{
+#if DEBUG
+			firstLoadStopwatch.Stop();
+			GD.Print($"[World] took {firstLoadStopwatch.ElapsedMilliseconds} ms to make chunks");
+#endif
+
+			await MakeStructures();
+
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			AStar = await Pathfinder.PopulateAStar();
+			GenerateEntities();
+		};
 
 		Task voxelThread = new(VoxelsThread);
 		voxelThread.ContinueWith((Task task) => throw task.Exception.InnerException, TaskContinuationOptions.OnlyOnFaulted);
@@ -345,16 +380,8 @@ public partial class World : Node3D
 
 	public override void _Process(double delta)
 	{
-		if (Settings.ShowDebugDraw)
-		{
-			foreach (Chunk chunk in GetAllChunks())
-			{
-				DebugDraw.Box(new Vector3((chunk.ChunkPosition.X * Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2), Chunk.CHUNK_SIZE.Y / 2, (chunk.ChunkPosition.Y * Chunk.CHUNK_SIZE.X) + (Chunk.CHUNK_SIZE.X / 2)), new Vector3(Chunk.CHUNK_SIZE.X, Chunk.CHUNK_SIZE.Y, Chunk.CHUNK_SIZE.X));
-			}
-		}
-
 		if (!Find.DebugUi.Enabled) return;
 
-		Find.DebugUi.Get<Label>("Memory").Text = $"MEM: {Performance.GetMonitor(Performance.Monitor.MemoryStatic) / 1000 / 1000:n0} mB / {Performance.GetMonitor(Performance.Monitor.MemoryStaticMax) / 1000 / 1000:n0} mB";
+		Find.DebugUi.Get<Label>("Memory").Text = $"MEM: {Performance.GetMonitor(Performance.Monitor.MemoryStatic) / 1024 / 1024:n0} MB / {Performance.GetMonitor(Performance.Monitor.MemoryStaticMax) / 1024 / 1024:n0} MB";
 	}
 }

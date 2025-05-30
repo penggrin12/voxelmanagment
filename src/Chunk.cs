@@ -64,6 +64,7 @@ public partial class Chunk : Node3D
 
 	public Voxel GetVoxel(Vector3I position) => voxels[position.X, position.Y, position.Z];
 	public Voxel GetVoxel(int x, int y, int z) => voxels[x, y, z];
+
 	public void SetVoxel(Vector3I position, byte id) => SetVoxel(position.X, position.Y, position.Z, id);
 	public void SetVoxel(int x, int y, int z, byte id) => voxels[x, y, z] = new Voxel() { id = id, light = byte.MaxValue };
 
@@ -146,7 +147,9 @@ public partial class Chunk : Node3D
 			}
 		}
 
-		// GD.Print($"made nav points on {ChunkPosition}: {navPoints.Count}");
+#if DEBUG
+		GD.Print($"[Chunk @ {ChunkPosition}] made {navPoints.Count} nav points");
+#endif
 
 		foreach (long pointId in navPoints)
 		{
@@ -362,7 +365,10 @@ public partial class Chunk : Node3D
 				}
 				else
 				{
-					// GD.Print($"placing metal at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+#if DEBUG
+					// TODO: make this (and MakeOreGrow's) print only once per chunk?
+					// GD.Print($"[Chunk @ {ChunkPosition} : MakeOreWorm ] placing {oreID} at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+#endif
 					ores.Add(metalAt);
 					oresToSpawn--;
 				}
@@ -413,7 +419,9 @@ public partial class Chunk : Node3D
 				}
 				else
 				{
-					// GD.Print($"placing metal at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+#if DEBUG
+					// GD.Print($"[Chunk @ {ChunkPosition} : MakeOreGrow] placing {oreID} at ({metalAt.X}, {metalAt.Y}, {metalAt.Z})");
+#endif
 					ores.Add(metalAt);
 					oresToSpawn--;
 				}

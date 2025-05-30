@@ -111,6 +111,10 @@ command_entity_move={
 3d_physics/layer_2="terrain"
 3d_physics/layer_3="entities"
 
+[network]
+
+limits/debugger/max_chars_per_second=524288
+
 [rendering]
 
 lights_and_shadows/directional_shadow/size=256
