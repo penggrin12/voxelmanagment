@@ -10,7 +10,7 @@ public partial class Chunk : Node3D
 	[Export] public Vector2I ChunkPosition = Vector2I.Zero;
 	public Voxel[,,] voxels;
 	public List<long> navPoints = [];
-	public List<(long, long)> navConnections = [];
+	public HashSet<(long, long)> navConnections = [];
 
 	private MeshInstance3D meshInstance;
 
@@ -65,8 +65,8 @@ public partial class Chunk : Node3D
 	public Voxel GetVoxel(Vector3I position) => voxels[position.X, position.Y, position.Z];
 	public Voxel GetVoxel(int x, int y, int z) => voxels[x, y, z];
 
-	public void SetVoxel(Vector3I position, byte id) => SetVoxel(position.X, position.Y, position.Z, id);
-	public void SetVoxel(int x, int y, int z, byte id) => voxels[x, y, z] = new Voxel() { id = id, light = byte.MaxValue };
+	public void SetVoxel(Vector3I position, byte id, bool isSlab = false) => SetVoxel(position.X, position.Y, position.Z, id, isSlab);
+	public void SetVoxel(int x, int y, int z, byte id, bool isSlab = false) => voxels[x, y, z] = new Voxel() { id = id, light = byte.MaxValue, isSlab = isSlab };
 
 	public static bool IsVoxelInBounds(Vector3I position)
 	{
@@ -114,10 +114,8 @@ public partial class Chunk : Node3D
 			return Find.World.GetChunk(at.chunkPosition).IsVoxelSolidForThisVoxel(at.voxelPosition, askerVoxelID);
 		}
 
-		if (!IsVoxelInBounds(position)) return false;
-
-		byte voxelID = GetVoxelRefReadonly(position).id;
-		return VoxelData.DATA[voxelID].Solid || (askerVoxelID == voxelID);
+		Voxel voxel = GetVoxelRefReadonly(position);
+		return (!voxel.isSlab) && (VoxelData.DATA[voxel.id].Solid || (askerVoxelID == voxel.id));
 	}
 
 	private void RebuildNav()
@@ -190,55 +188,63 @@ public partial class Chunk : Node3D
 		VoxelData.Data voxelData = VoxelData.DATA[voxel.id];
 
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + FRONT.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, FRONT, IndexToVector(voxelData.Texture_lookup[0]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, FRONT, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[0]), voxel.light);
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + BACK.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, BACK, IndexToVector(voxelData.Texture_lookup[1]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, BACK, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[1]), voxel.light);
 
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + RIGHT.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, RIGHT, IndexToVector(voxelData.Texture_lookup[2]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, RIGHT, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[2]), voxel.light);
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + LEFT.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, LEFT, IndexToVector(voxelData.Texture_lookup[3]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, LEFT, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[3]), voxel.light);
 
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + BOTTOM.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, BOTTOM, IndexToVector(voxelData.Texture_lookup[4]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, BOTTOM, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[4]), voxel.light);
 		if (!IsVoxelSolidForThisVoxel(voxelPosition + TOP.Normal, voxel.id))
-			RebuildSide(surfaceTool, realPosition, TOP, IndexToVector(voxelData.Texture_lookup[5]), voxel.light);
+			RebuildSide(surfaceTool, realPosition, TOP, voxel.isSlab, IndexToVector(voxelData.Texture_lookup[5]), voxel.light);
 	}
 
-	private static void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, Vector2 textureAtlasOffset, byte light)
+	private static void RebuildSide(SurfaceTool surfaceTool, Vector3I realPos, Side side, bool isSlab, Vector2 textureAtlasOffset, byte light)
 	{
 		// a+------+b 
 		//  |      | b-c-a
 		//  |      | b-d-c
 		// c+------+d
 
-		Vector3I a = VERTICES[side.Vertex0] + realPos;
-		Vector3I b = VERTICES[side.Vertex1] + realPos;
-		Vector3I c = VERTICES[side.Vertex2] + realPos;
-		Vector3I d = VERTICES[side.Vertex3] + realPos;
+		Vector3 slabOffset = isSlab ? new Vector3(1f, 0.5f, 1f) : Vector3.One;
 
-		Vector2 uvOffset = textureAtlasOffset / TEXTURE_ATLAS_SIZE;
-		float height = 1.0f / TEXTURE_ATLAS_SIZE.Y;
-		float width = 1.0f / TEXTURE_ATLAS_SIZE.X;
+		Vector3 a = (VERTICES[side.Vertex0] * slabOffset) + realPos;
+		Vector3 b = (VERTICES[side.Vertex1] * slabOffset) + realPos;
+		Vector3 c = (VERTICES[side.Vertex2] * slabOffset) + realPos;
+		Vector3 d = (VERTICES[side.Vertex3] * slabOffset) + realPos;
 
-		Vector2 uvA = uvOffset + Vector2.Zero;
-		Vector2 uvB = uvOffset + new Vector2(width, 0);
-		Vector2 uvC = uvOffset + new Vector2(0, height);
-		Vector2 uvD = uvOffset + new Vector2(width, height);
+		Vector2 atlasSize = TEXTURE_ATLAS_SIZE;
+		float uSize = 1.0f / atlasSize.X;
+		float vSize = 1.0f / atlasSize.Y;
 
-		// this is probably horrible
+		bool isVerticalFace = (side.Normal != Vector3I.Up) && (side.Normal != Vector3I.Down);
+		float vScale = (isSlab && isVerticalFace) ? 0.5f : 1.0f;
+		// float vOffset = 0;
+		float vOffset = (isSlab && isVerticalFace) ? vSize * (1.0f - vScale) : 0.0f;
+
+		Vector2 uvOff = textureAtlasOffset * new Vector2(uSize, vSize);
+
+		Vector2 uvA = uvOff + new Vector2(0, vOffset);
+		Vector2 uvB = uvOff + new Vector2(uSize, vOffset);
+		Vector2 uvC = uvOff + new Vector2(0, vSize * vScale + vOffset);
+		Vector2 uvD = uvOff + new Vector2(uSize, vSize * vScale + vOffset);
+
+		if (side.Normal == Vector3I.Forward)
+		{
+			uvA = uvOff + new Vector2(uSize, vSize * vScale + vOffset);
+			uvB = uvOff + new Vector2(0, vSize * vScale + vOffset);
+			uvC = uvOff + new Vector2(uSize, vOffset);
+			uvD = uvOff + new Vector2(0, vOffset);
+		}
+
 		if (side.Normal == Vector3I.Up) light = 255;
 		else if (side.Normal == Vector3I.Back) light = 180;
 		else if (side.Normal == Vector3I.Right) light = 165;
 		else light = 135;
-
-		// hack fix uvs for -z (#1)
-		if (side.Normal == new Vector3I(0, 0, -1)) {
-			uvA = uvOffset + new Vector2(0, height);
-			uvB = uvOffset + new Vector2(width, height);
-			uvC = uvOffset + Vector2.Zero;
-			uvD = uvOffset + new Vector2(width, 0);
-		}
 
 		surfaceTool.SetCustom(0, new Color((float)light / byte.MaxValue, 0, 0));
 		surfaceTool.AddTriangleFan([b, c, a], [uvB, uvC, uvA]);
@@ -266,22 +272,22 @@ public partial class Chunk : Node3D
 			{
 				FastNoiseLite baseNoise = Find.World.baseNoise;
 				baseNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
-				int colHeight = (int)(((baseNoise.GetNoise2D(x, z) + 1f) / 2f) * (CHUNK_SIZE.Y * 0.75));
+				double colHeight = ((baseNoise.GetNoise2D(x, z) + 1f) / 2f) * (CHUNK_SIZE.Y * 0.75);
 
-				colHeight = (int)(colHeight * 2f);
+				colHeight = colHeight * 2f;
 
 				foreach (FastNoiseLite additiveNoise in Find.World.additiveNoises)
 				{
 					FastNoiseLite thisNoise = additiveNoise;
 					thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
-					colHeight = Mathf.Max(colHeight, colHeight + (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
+					colHeight = Mathf.Max(colHeight, colHeight + (thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y)));
 				}
 
 				foreach (FastNoiseLite subtractiveNoise in Find.World.subtractiveNoises)
 				{
 					FastNoiseLite thisNoise = subtractiveNoise;
 					thisNoise.Offset = new Vector3(ChunkPosition.X * CHUNK_SIZE.X, ChunkPosition.Y * CHUNK_SIZE.X, 0);
-					colHeight = Mathf.Min(colHeight, colHeight - (int)(thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y * 1.5)));
+					colHeight = Mathf.Min(colHeight, colHeight - (thisNoise.GetNoise2D(x, z) * (CHUNK_SIZE.Y * 1.5)));
 				}
 
 				colHeight /= 4;
@@ -290,15 +296,16 @@ public partial class Chunk : Node3D
 				if (Find.World.islandMode)
 				{
 					Location at = new() {chunkPosition = ChunkPosition, voxelPosition = new Vector3I(x, 0, z)};
-					colHeight -= (int)(Find.World.islandGradient.Sample(at.GetGlobalPosition().DistanceTo(Vector3I.Zero) / (Settings.WorldSize * CHUNK_SIZE.X)).R * (CHUNK_SIZE.Y / 2));
+					colHeight -= (Find.World.islandGradient.Sample(at.GetGlobalPosition().DistanceTo(Vector3I.Zero) / (Settings.WorldSize * CHUNK_SIZE.X)).R * (CHUNK_SIZE.Y / 2));
 				}
 
-				// Find.DebugUi.Get<Label>("Test").Text = (CHUNK_SIZE.Y / 1.9).ToString();
+				int h = Mathf.FloorToInt((float)colHeight);
+				float frac = (float)(colHeight - h);
 
 				VoxelData.ID voxelID;
 
-				// if (colHeight <= CHUNK_SIZE.Y / 9) voxelID = VoxelData.ID.DIRT;
-				// if (colHeight <= CHUNK_SIZE.Y / 4 + (GD.Randf() * 0.4)) voxelID = VoxelData.ID.WATER;
+				bool isSlab = (frac < 0.5f) && (Settings.GenerateSlabs);
+
 				if (colHeight <= 19 + Random.Next(0, 1)) voxelID = VoxelData.ID.SAND;
 				else if (colHeight <= 33 + Random.Next(-1, 1)) voxelID = VoxelData.ID.GRASS;
 				else voxelID = VoxelData.ID.STONE;
@@ -306,8 +313,8 @@ public partial class Chunk : Node3D
 				for (int y = 0; y < CHUNK_SIZE.Y; y++)
 				{
 					if (y == 0) { SetVoxel(x, y, z, (byte)VoxelData.ID.HARDSTONE); continue; }
-					if (y == 1 && colHeight <= 0) { SetVoxel(x, y, z, (byte)voxelID); continue; }
-					if (y > colHeight)
+					if (y == 1 && h <= 0) { SetVoxel(x, y, z, (byte)voxelID); continue; }
+					if (y > h)
 					{
 						if (y <= 18) SetVoxel(x, y, z, (byte)VoxelData.ID.WATER);
 						continue;
@@ -315,9 +322,9 @@ public partial class Chunk : Node3D
 
 					if (new List<VoxelData.ID>() { VoxelData.ID.GRASS, VoxelData.ID.SAND }.Contains(voxelID))
 					{
-						if (y == colHeight)
-							SetVoxel(x, y, z, (byte)voxelID);
-						else if (y < colHeight && y >= colHeight - Random.Next(3, 5))
+						if (y == h)
+							SetVoxel(x, y, z, (byte)voxelID, isSlab);
+						else if (y < h && y >= h - Random.Next(3, 5))
 							SetVoxel(x, y, z, voxelID == VoxelData.ID.SAND ? (byte)voxelID : (byte)VoxelData.ID.DIRT);
 						else
 							SetVoxel(x, y, z, (byte)VoxelData.ID.STONE);

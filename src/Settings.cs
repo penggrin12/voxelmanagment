@@ -8,16 +8,15 @@ namespace Game;
 public static class Settings
 {
 	private const string    SETTINGS_FILE_PATH = "user://settings.json";
-	private const ushort    SETTINGS_VERSION = 5;
+	private const ushort    SETTINGS_VERSION = 6;
 	public static ushort    WorldSize { get; set; } = 15;
 	public static bool      ShowDebugDraw { get; set; } = true;
 	public static bool      ShowEvenMoreDebugDraw { get; set; } = false;
 	public static bool      IslandMode { get; set; } = false;
+	public static bool      GenerateSlabs { get; set; } = false;
 
 	private static void NewSettingsFile(string path)
 	{
-		using StreamWriter textReader = new(new FileStream(path, FileMode.Create, FileAccess.Write));
-
 		Dictionary<string, object> dictToWrite = new() { { "FileVersion", SETTINGS_VERSION } };
 
 		foreach (PropertyInfo property in typeof(Settings).GetProperties(BindingFlags.Public | BindingFlags.Static))
@@ -25,7 +24,8 @@ public static class Settings
 			dictToWrite.Add(property.Name, property.GetValue(null));
 		}
 
-		textReader.Write(JsonConvert.SerializeObject(dictToWrite, Formatting.Indented, new JsonSerializerSettings()));
+		string json = JsonConvert.SerializeObject(dictToWrite, Formatting.Indented);
+		File.WriteAllText(path, json);
 	}
 
 	private static void LoadSettingsFile(string path)
@@ -42,7 +42,7 @@ public static class Settings
 				{
 					Godot.GD.PushWarning("[Settings] mismatch version, rewriting file!");
 					NewSettingsFile(path);
-					LoadSettingsFile(path);
+					// LoadSettingsFile(path);
 					return;
 				}
 

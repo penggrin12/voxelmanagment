@@ -5,6 +5,7 @@ namespace Game.Structs;
 public struct Voxel
 {
 	public byte id;
+	public bool isSlab;
 	public byte light;
 
 	public static Aabb GetAABB(int x, int y, int z) {
